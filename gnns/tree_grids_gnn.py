@@ -10,7 +10,8 @@ import torch.nn as nn
 from torch.nn import Linear as Lin, ModuleList, ReLU, Softmax
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch_geometric.nn import BatchNorm, GCNConv
-from torch_geometric.utils import accuracy
+def accuracy(pred, target):
+    return (pred == target).sum().item() / target.size(0)
 
 from utils import set_seed
 

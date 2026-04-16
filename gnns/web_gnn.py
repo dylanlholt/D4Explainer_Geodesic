@@ -13,7 +13,10 @@ from torch.nn import Parameter
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch_geometric.nn import BatchNorm, MessagePassing
 from torch_geometric.nn.inits import zeros
-from torch_geometric.utils import accuracy, add_remaining_self_loops
+from torch_geometric.utils import add_remaining_self_loops
+
+def accuracy(pred, target):
+    return (pred == target).sum().item() / target.size(0)
 from torch_scatter import scatter_add
 
 from utils import set_seed
