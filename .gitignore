@@ -12,6 +12,9 @@ data/
 param/gnns/*.pt
 results/
 
+# Logs 
+param/gnns/logs/
+
 # Jupyter
 .ipynb_checkpoints/
 

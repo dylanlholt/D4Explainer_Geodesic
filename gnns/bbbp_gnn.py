@@ -1,6 +1,7 @@
 import argparse
 import os
 import os.path as osp
+import csv
 import time
 import sys
 sys.path.append("..")
@@ -134,6 +135,12 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     scheduler = ReduceLROnPlateau(optimizer, mode="min", factor=0.8, patience=10, min_lr=1e-5)
     min_error = None
+    log_dir = osp.join(args.model_path, "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log_path = osp.join(log_dir, "bbbp_training_log.csv")
+    log_file = open(log_path, "w", newline="")
+    log_writer = csv.writer(log_file)
+    log_writer.writerow(["epoch", "lr", "train_loss", "train_acc", "val_loss", "val_acc", "test_loss", "test_acc"])
     for epoch in range(1, args.epoch + 1):
         t1 = time.time()
         lr = scheduler.optimizer.param_groups[0]["lr"]
@@ -143,14 +150,15 @@ if __name__ == "__main__":
         _, train_acc = Gtest(train_loader, model, device=device, criterion=nn.CrossEntropyLoss())
 
         val_error, val_acc = Gtest(val_loader, model, device=device, criterion=nn.CrossEntropyLoss())
+        test_error, test_acc = Gtest(test_loader, model, device=device, criterion=nn.CrossEntropyLoss())
         scheduler.step(val_error)
         if min_error is None or val_error <= min_error:
             min_error = val_error
 
         t2 = time.time()
+        log_writer.writerow([epoch, f"{lr:.5f}", f"{loss:.5f}", f"{train_acc:.5f}", f"{val_error:.5f}", f"{val_acc:.5f}", f"{test_error:.5f}", f"{test_acc:.5f}"])
 
         if epoch % args.verbose == 0:
-            test_error, test_acc = Gtest(test_loader, model, device=device, criterion=nn.CrossEntropyLoss())
             t3 = time.time()
             print(
                 "Epoch{:4d}[{:.3f}s]: LR: {:.5f}, Loss: {:.5f}, Test Loss: {:.5f}, "
@@ -168,3 +176,5 @@ if __name__ == "__main__":
     if not osp.exists(args.model_path):
         os.makedirs(args.model_path)
     torch.save(model.cpu(), osp.join(args.model_path, save_path))
+    log_file.close()
+    print(f"Training log saved to {log_path}")

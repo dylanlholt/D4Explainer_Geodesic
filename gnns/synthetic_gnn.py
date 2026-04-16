@@ -1,6 +1,7 @@
 import argparse
 import os
 import os.path as osp
+import csv
 import time
 import sys
 sys.path.append("..")
@@ -138,6 +139,13 @@ if __name__ == "__main__":
     min_error = None
     criterion = nn.CrossEntropyLoss()
 
+    log_dir = osp.join(args.model_path, "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log_path = osp.join(log_dir, f"{name}_training_log.csv")
+    log_file = open(log_path, "w", newline="")
+    log_writer = csv.writer(log_file)
+    log_writer.writerow(["epoch", "train_loss", "train_acc", "test_loss", "test_acc"])
+
     def train(epoch):
         t = time.time()
         model.train()
@@ -154,6 +162,7 @@ if __name__ == "__main__":
             "acc_train: {:.4f}".format(acc_train),
             "time: {:.4f}s".format(time.time() - t),
         )
+        return loss_train.item(), acc_train
 
     def eval():
         model.eval()
@@ -162,20 +171,28 @@ if __name__ == "__main__":
         y_pred = torch.argmax(output, dim=1)
         acc_test = accuracy(y_pred[data.test_mask], data.y[data.test_mask])
         print("Test set results:", "loss= {:.4f}".format(loss_test.item()), "accuracy= {:.4f}".format(acc_test))
-        return loss_test, y_pred
+        return loss_test, acc_test, y_pred
 
+    y_pred = None
     for epoch in range(1, args.epoch + 1):
-        train(epoch)
+        train_loss, train_acc_ep = train(epoch)
+        test_loss_log, test_acc_log = float("nan"), float("nan")
 
         if epoch % args.verbose == 0:
-            loss_test, y_pred = eval()
+            loss_test, test_acc_log, y_pred = eval()
             scheduler.step(loss_test)
+            test_loss_log = loss_test.item()
+        log_writer.writerow([epoch, f"{train_loss:.4f}", f"{train_acc_ep:.4f}",
+                              "" if test_loss_log != test_loss_log else f"{test_loss_log:.4f}",
+                              "" if test_acc_log != test_acc_log else f"{test_acc_log:.4f}"])
 
     save_path = f"{name}_gcn.pt"
 
     if not osp.exists(args.model_path):
         os.makedirs(args.model_path)
     torch.save(model.cpu(), osp.join(args.model_path, save_path))
+    log_file.close()
+    print(f"Training log saved to {log_path}")
     labels = data.y[data.test_mask].cpu().numpy()
     pred = y_pred[data.test_mask].cpu().numpy()
     print("y_true counts: {}".format(np.unique(labels, return_counts=True)))
