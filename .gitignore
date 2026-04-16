@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Datasets (large — upload to Drive separately)
+data/
+
+# Trained model checkpoints
+param/gnns/*.pt
+results/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Conda / virtualenv
+*.egg-info/
+.env
