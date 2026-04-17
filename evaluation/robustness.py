@@ -28,7 +28,7 @@ class DiffExplainer(BaseExplainer):
         self.device = device
         self.model = Powerful(args).to(args.device)
         exp_dir = f"{args.root}/{args.dataset}/"
-        self.model.load_state_dict(torch.load(os.path.join(exp_dir, "best_model.pth"), map_location="cuda:0")["model"])
+        self.model.load_state_dict(torch.load(os.path.join(exp_dir, "best_model.pth"), map_location="cuda:0", weights_only=False)["model"])
         self.model.eval()
 
     def explain_graph(self, model, graph, adj_b, x_b, node_flag_b, sigma_list, args):
@@ -110,7 +110,7 @@ args.task = task_type[args.dataset]
 train_dataset, val_dataset, test_dataset = get_datasets(name=args.dataset, root="../data")
 test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, drop_last=False)
 gnn_path = f"../param/gnns/{args.dataset}_gcn.pt"
-model = torch.load(gnn_path, map_location=args.device).to(args.device)
+model = torch.load(gnn_path, map_location=args.device, weights_only=False).to(args.device)
 
 def get_graph_pred(graph):
     if args.task == "nc":

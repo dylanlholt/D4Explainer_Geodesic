@@ -116,7 +116,7 @@ if __name__ == "__main__":
     device = torch.device(f"cuda:{args.cuda}" if torch.cuda.is_available() else "cpu")
     name = args.data_name
     file_dir = osp.join(osp.dirname(__file__), "..", "data", name, "processed/whole_graph.pt")
-    data = torch.load(file_dir)
+    data = torch.load(file_dir, weights_only=False)
     data.to(device)
     n_input = data.x.size(1)
     n_labels = int(torch.unique(data.y).size(0))

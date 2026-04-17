@@ -405,7 +405,7 @@ class DiffExplainer(Explainer):
         """
         model = Powerful(args).to(args.device)
         exp_dir = f"{args.root}/{args.dataset}/"
-        model.load_state_dict(torch.load(os.path.join(exp_dir, "best_model.pth"))["model"])
+        model.load_state_dict(torch.load(os.path.join(exp_dir, "best_model.pth"), weights_only=False)["model"])
         model.eval()
         graph.to(args.device)
         test_adj_b, test_x_b = graph2tensor(graph, device=args.device)  # [bsz, N, N]
@@ -470,7 +470,7 @@ class DiffExplainer(Explainer):
         mask = torch.ones_like(random_adj).to(args.device)
         model = Powerful(args).to(args.device)
         exp_dir = f"{args.root}/{args.dataset}/"
-        model.load_state_dict(torch.load(os.path.join(exp_dir, "best_model.pth"))["model"])
+        model.load_state_dict(torch.load(os.path.join(exp_dir, "best_model.pth"), weights_only=False)["model"])
         model.eval()
         score = model(A=random_adj, node_features=node_feature, mask=mask, noiselevel=sigma).to(args.device)
         score = score.squeeze(0).squeeze(-1)

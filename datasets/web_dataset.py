@@ -28,7 +28,7 @@ class WebDataset(InMemoryDataset):
         self.mode = mode
         super(WebDataset, self).__init__(root, transform, pre_transform)
         idx = self.processed_file_names.index("{}_sub.pt".format(mode))
-        self.data, self.slices = torch.load(self.processed_paths[idx])
+        self.data, self.slices = torch.load(self.processed_paths[idx], weights_only=False)
 
     @property
     def raw_dir(self):

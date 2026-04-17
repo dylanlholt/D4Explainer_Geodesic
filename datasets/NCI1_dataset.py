@@ -22,7 +22,7 @@ class NCI1(InMemoryDataset):
         super(NCI1, self).__init__(root, transform, pre_transform, pre_filter)
 
         idx = self.processed_file_names.index("{}.pt".format(mode))
-        self.data, self.slices = torch.load(self.processed_paths[idx])
+        self.data, self.slices = torch.load(self.processed_paths[idx], weights_only=False)
         self.url = {
             "https://ls11-www.cs.tu-dortmund.de/people/morris/graphkerneldatasets/NCI1.zip"
         }
