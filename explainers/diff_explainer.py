@@ -2,12 +2,13 @@ import os
 
 import numpy as np
 import torch
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 from torch_geometric.loader import DataLoader
 from torch_geometric.utils import to_undirected
 
 from explainers.base import Explainer
 from explainers.diffusion.graph_utils import (
+    discretenoise_single,
     gen_full,
     gen_list_of_data_single,
     generate_mask,
@@ -38,7 +39,7 @@ def model_save(args, model, mean_train_loss, best_sparsity, mean_test_acc):
     print(f"save model to {exp_dir}/best_model.pth")
 
 
-def loss_func_bce(score_list, groundtruth, sigma_list, mask, device, sparsity_level):
+def loss_func_bce(score_list, groundtruth, sigma_list, mask, device, sparsity_level, total_sigmas=None):
     """
     Loss function for binary cross entropy
     param score_list: [len(sigma_list)*bsz, N, N]
@@ -47,8 +48,11 @@ def loss_func_bce(score_list, groundtruth, sigma_list, mask, device, sparsity_le
     param mask: [len(sigma_list)*bsz, N, N]
     param device: device
     param sparsity_level: sparsity level
+    param total_sigmas: total number of sigmas (defaults to len(sigma_list); pass the full count when calling per-sigma)
     return: BCE loss
     """
+    if total_sigmas is None:
+        total_sigmas = len(sigma_list)
     bsz = int(score_list.size(0) / len(sigma_list))
     num_node = score_list.size(-1)
     score_list = score_list * mask
@@ -68,7 +72,7 @@ def loss_func_bce(score_list, groundtruth, sigma_list, mask, device, sparsity_le
         .unsqueeze(-1)
         .expand(groundtruth.size(0), num_node, num_node)
         .to(device)
-        + 1.0 / len(sigma_list)
+        + 1.0 / total_sigmas
     )
     loss_matrix = loss_matrix * mask
     loss_matrix = (loss_matrix + torch.transpose(loss_matrix, -2, -1)) / 2
@@ -210,7 +214,7 @@ class DiffExplainer(Explainer):
         """
         best_sparsity = np.inf
         use_amp = getattr(args, "use_amp", False) and args.device.type == "cuda"
-        scaler = GradScaler(enabled=use_amp)
+        scaler = GradScaler("cuda", enabled=use_amp)
         optimizer = torch.optim.Adam(
             model.parameters(), lr=args.learning_rate, betas=(0.9, 0.999), eps=1e-8, weight_decay=args.weight_decay
         )
@@ -240,53 +244,62 @@ class DiffExplainer(Explainer):
                     else noise_list
                 )
                 train_node_flag_b = train_adj_b.sum(-1).gt(1e-5).to(dtype=torch.float32)  # [bsz, N]
-                # all nodes that are not connected with others
                 if isinstance(sigma_list, float):
                     sigma_list = [sigma_list]
-                (train_x_b, train_ori_adj_b, train_node_flag_sigma, train_noise_adj_b, _) = gen_list_of_data_single(
-                    train_x_b, train_adj_b, train_node_flag_b, sigma_list, args
-                )
+
+                mask = generate_mask(train_node_flag_b).to(args.device)
                 optimizer.zero_grad()
-                train_noise_adj_b_chunked = train_noise_adj_b.chunk(len(sigma_list), dim=0)
-                train_x_b_chunked = train_x_b.chunk(len(sigma_list), dim=0)
-                train_node_flag_sigma = train_node_flag_sigma.chunk(len(sigma_list), dim=0)
-                score = []
-                masks = []
-                with autocast(enabled=use_amp):
-                    for i, sigma in enumerate(sigma_list):
-                        mask = generate_mask(train_node_flag_sigma[i])
-                        score_batch = model(
-                            A=train_noise_adj_b_chunked[i].to(args.device),
-                            node_features=train_x_b_chunked[i].to(args.device),
-                            mask=mask.to(args.device),
+                total_bce_val = 0.0
+
+                # BCE: one sigma at a time — backward after each to free activations
+                for j, sigma in enumerate(sigma_list):
+                    noise_adj_j, _ = discretenoise_single(train_adj_b, train_node_flag_b, sigma, args.device)
+                    with autocast("cuda", enabled=use_amp):
+                        score_j = model(
+                            A=noise_adj_j,
+                            node_features=train_x_b,
+                            mask=mask,
                             noiselevel=sigma,
-                        )  # [bsz, N, N, 1]
-                        score.append(score_batch)
-                        masks.append(mask)
-                    graph_batch_sub = tensor2graph(graph, score, mask)
+                        )
+                        bce_j = loss_func_bce(
+                            score_j.squeeze(-1),
+                            train_adj_b,
+                            [sigma],
+                            mask,
+                            args.device,
+                            args.sparsity_level,
+                            total_sigmas=len(sigma_list),
+                        )
+                    scaler.scale(bce_j / len(sigma_list)).backward()
+                    total_bce_val += bce_j.item() / len(sigma_list)
+
+                # CF loss: one forward with the last sigma, keeps gradient through score
+                sigma_cf = sigma_list[-1]
+                noise_adj_cf, _ = discretenoise_single(train_adj_b, train_node_flag_b, sigma_cf, args.device)
+                with autocast("cuda", enabled=use_amp):
+                    score_cf = model(
+                        A=noise_adj_cf,
+                        node_features=train_x_b,
+                        mask=mask,
+                        noiselevel=sigma_cf,
+                    )
+                    graph_batch_sub = tensor2graph(graph, [score_cf], mask)
                     y_pred, y_exp = gnn_pred(graph, graph_batch_sub, gnn_model, ds=args.dataset, task=args.task)
                     full_edge_index = gen_full(graph.batch, mask)
-                    score_b = torch.cat(score, dim=0).squeeze(-1).to(args.device)  # [len(sigma_list)*bsz, N, N]
-                    masktens = torch.cat(masks, dim=0).to(args.device)  # [len(sigma_list)*bsz, N, N]
-                    modif_r = sparsity(score, train_adj_b, mask)
-                    remain_r = sparsity(score, train_adj_b, train_adj_b)
                     loss_cf, fid_drop, acc_cf = loss_cf_exp(
-                        gnn_model, graph, score, y_pred, y_exp, full_edge_index, mask, ds=args.dataset, task=args.task
+                        gnn_model, graph, [score_cf], y_pred, y_exp, full_edge_index, mask, ds=args.dataset, task=args.task
                     )
-                    loss_dist = loss_func_bce(
-                        score_b,
-                        train_ori_adj_b,
-                        sigma_list,
-                        masktens,
-                        device=args.device,
-                        sparsity_level=args.sparsity_level,
-                    )
-                    loss = loss_dist + args.alpha_cf * loss_cf
-                scaler.scale(loss).backward()
+                    loss_cf_scaled = args.alpha_cf * loss_cf
+                scaler.scale(loss_cf_scaled).backward()
                 scaler.step(optimizer)
                 scaler.update()
-                train_losses.append(loss.item())
-                train_loss_dist.append(loss_dist.item())
+
+                with torch.no_grad():
+                    modif_r = sparsity([score_cf], train_adj_b, mask)
+                    remain_r = sparsity([score_cf], train_adj_b, train_adj_b)
+
+                train_losses.append(total_bce_val + loss_cf_scaled.item())
+                train_loss_dist.append(total_bce_val)
                 train_loss_cf.append(loss_cf.item())
                 train_acc.append(acc_cf)
                 train_fid.append(fid_drop)
