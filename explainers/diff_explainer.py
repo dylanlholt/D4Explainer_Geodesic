@@ -3,6 +3,7 @@ import os
 import numpy as np
 import torch
 from torch.amp import GradScaler, autocast
+from torch.utils.checkpoint import checkpoint as grad_checkpoint
 from torch_geometric.loader import DataLoader
 from torch_geometric.utils import to_undirected
 
@@ -251,16 +252,19 @@ class DiffExplainer(Explainer):
                 optimizer.zero_grad()
                 total_bce_val = 0.0
 
+                use_gc = getattr(args, "gradient_checkpointing", False)
+
+                def run_model(node_features, A, mask, sigma):
+                    return model(node_features=node_features, A=A, mask=mask, noiselevel=sigma)
+
                 # BCE: one sigma at a time — backward after each to free activations
                 for j, sigma in enumerate(sigma_list):
                     noise_adj_j, _ = discretenoise_single(train_adj_b, train_node_flag_b, sigma, args.device)
                     with autocast("cuda", enabled=use_amp):
-                        score_j = model(
-                            A=noise_adj_j,
-                            node_features=train_x_b,
-                            mask=mask,
-                            noiselevel=sigma,
-                        )
+                        if use_gc:
+                            score_j = grad_checkpoint(run_model, train_x_b, noise_adj_j, mask, sigma, use_reentrant=False)
+                        else:
+                            score_j = model(A=noise_adj_j, node_features=train_x_b, mask=mask, noiselevel=sigma)
                         bce_j = loss_func_bce(
                             score_j.squeeze(-1),
                             train_adj_b,
@@ -277,12 +281,10 @@ class DiffExplainer(Explainer):
                 sigma_cf = sigma_list[-1]
                 noise_adj_cf, _ = discretenoise_single(train_adj_b, train_node_flag_b, sigma_cf, args.device)
                 with autocast("cuda", enabled=use_amp):
-                    score_cf = model(
-                        A=noise_adj_cf,
-                        node_features=train_x_b,
-                        mask=mask,
-                        noiselevel=sigma_cf,
-                    )
+                    if use_gc:
+                        score_cf = grad_checkpoint(run_model, train_x_b, noise_adj_cf, mask, sigma_cf, use_reentrant=False)
+                    else:
+                        score_cf = model(A=noise_adj_cf, node_features=train_x_b, mask=mask, noiselevel=sigma_cf)
                     graph_batch_sub = tensor2graph(graph, [score_cf], mask)
                     y_pred, y_exp = gnn_pred(graph, graph_batch_sub, gnn_model, ds=args.dataset, task=args.task)
                     full_edge_index = gen_full(graph.batch, mask)

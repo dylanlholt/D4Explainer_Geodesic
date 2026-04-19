@@ -245,10 +245,7 @@ class Powerful(nn.Module):
             out = [u]
             u1 = self.in_lin(u)
         for conv, bn in zip(self.convs, self.bns):
-            if self.gradient_checkpointing and self.training:
-                u1 = checkpoint(conv, u1, mask, use_reentrant=False) + (u1 if self.residual else 0)
-            else:
-                u1 = conv(u1, mask) + (u1 if self.residual else 0)
+            u1 = conv(u1, mask) + (u1 if self.residual else 0)
             if self.normalization == "none":
                 u1 = u1
             elif self.normalization == "instance":
