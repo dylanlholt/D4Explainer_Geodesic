@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import torch
+from torch.cuda.amp import GradScaler, autocast
 from torch_geometric.loader import DataLoader
 from torch_geometric.utils import to_undirected
 
@@ -208,6 +209,8 @@ class DiffExplainer(Explainer):
         :param test_dataset: test dataset
         """
         best_sparsity = np.inf
+        use_amp = getattr(args, "use_amp", False) and args.device.type == "cuda"
+        scaler = GradScaler(enabled=use_amp)
         optimizer = torch.optim.Adam(
             model.parameters(), lr=args.learning_rate, betas=(0.9, 0.999), eps=1e-8, weight_decay=args.weight_decay
         )
@@ -249,37 +252,39 @@ class DiffExplainer(Explainer):
                 train_node_flag_sigma = train_node_flag_sigma.chunk(len(sigma_list), dim=0)
                 score = []
                 masks = []
-                for i, sigma in enumerate(sigma_list):
-                    mask = generate_mask(train_node_flag_sigma[i])
-                    score_batch = model(
-                        A=train_noise_adj_b_chunked[i].to(args.device),
-                        node_features=train_x_b_chunked[i].to(args.device),
-                        mask=mask.to(args.device),
-                        noiselevel=sigma,
-                    )  # [bsz, N, N, 1]
-                    score.append(score_batch)
-                    masks.append(mask)
-                graph_batch_sub = tensor2graph(graph, score, mask)
-                y_pred, y_exp = gnn_pred(graph, graph_batch_sub, gnn_model, ds=args.dataset, task=args.task)
-                full_edge_index = gen_full(graph.batch, mask)
-                score_b = torch.cat(score, dim=0).squeeze(-1).to(args.device)  # [len(sigma_list)*bsz, N, N]
-                masktens = torch.cat(masks, dim=0).to(args.device)  # [len(sigma_list)*bsz, N, N]
-                modif_r = sparsity(score, train_adj_b, mask)
-                remain_r = sparsity(score, train_adj_b, train_adj_b)
-                loss_cf, fid_drop, acc_cf = loss_cf_exp(
-                    gnn_model, graph, score, y_pred, y_exp, full_edge_index, mask, ds=args.dataset, task=args.task
-                )
-                loss_dist = loss_func_bce(
-                    score_b,
-                    train_ori_adj_b,
-                    sigma_list,
-                    masktens,
-                    device=args.device,
-                    sparsity_level=args.sparsity_level,
-                )
-                loss = loss_dist + args.alpha_cf * loss_cf
-                loss.backward()
-                optimizer.step()
+                with autocast(enabled=use_amp):
+                    for i, sigma in enumerate(sigma_list):
+                        mask = generate_mask(train_node_flag_sigma[i])
+                        score_batch = model(
+                            A=train_noise_adj_b_chunked[i].to(args.device),
+                            node_features=train_x_b_chunked[i].to(args.device),
+                            mask=mask.to(args.device),
+                            noiselevel=sigma,
+                        )  # [bsz, N, N, 1]
+                        score.append(score_batch)
+                        masks.append(mask)
+                    graph_batch_sub = tensor2graph(graph, score, mask)
+                    y_pred, y_exp = gnn_pred(graph, graph_batch_sub, gnn_model, ds=args.dataset, task=args.task)
+                    full_edge_index = gen_full(graph.batch, mask)
+                    score_b = torch.cat(score, dim=0).squeeze(-1).to(args.device)  # [len(sigma_list)*bsz, N, N]
+                    masktens = torch.cat(masks, dim=0).to(args.device)  # [len(sigma_list)*bsz, N, N]
+                    modif_r = sparsity(score, train_adj_b, mask)
+                    remain_r = sparsity(score, train_adj_b, train_adj_b)
+                    loss_cf, fid_drop, acc_cf = loss_cf_exp(
+                        gnn_model, graph, score, y_pred, y_exp, full_edge_index, mask, ds=args.dataset, task=args.task
+                    )
+                    loss_dist = loss_func_bce(
+                        score_b,
+                        train_ori_adj_b,
+                        sigma_list,
+                        masktens,
+                        device=args.device,
+                        sparsity_level=args.sparsity_level,
+                    )
+                    loss = loss_dist + args.alpha_cf * loss_cf
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
                 train_losses.append(loss.item())
                 train_loss_dist.append(loss_dist.item())
                 train_loss_cf.append(loss_cf.item())

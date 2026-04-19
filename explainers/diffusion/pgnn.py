@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.checkpoint import checkpoint
 
 SLOPE = 0.01
 
@@ -191,6 +192,7 @@ class Powerful(nn.Module):
             self.final_lin_node = nn.Sequential(spectral_norm(nn.Linear(self.hidden, self.node_output_features)))
 
         self.test_lin = nn.Sequential(spectral_norm(nn.Linear(self.input_features, self.output_features, bias=False)))
+        self.gradient_checkpointing = getattr(args, "gradient_checkpointing", False)
 
     def get_out_dim(self):
         """
@@ -243,7 +245,10 @@ class Powerful(nn.Module):
             out = [u]
             u1 = self.in_lin(u)
         for conv, bn in zip(self.convs, self.bns):
-            u1 = conv(u1, mask) + (u1 if self.residual else 0)
+            if self.gradient_checkpointing and self.training:
+                u1 = checkpoint(conv, u1, mask, use_reentrant=False) + (u1 if self.residual else 0)
+            else:
+                u1 = conv(u1, mask) + (u1 if self.residual else 0)
             if self.normalization == "none":
                 u1 = u1
             elif self.normalization == "instance":

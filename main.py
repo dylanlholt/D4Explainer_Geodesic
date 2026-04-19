@@ -43,6 +43,9 @@ def parse_args():
     parser.add_argument("--noise_mlp", type=bool, default=True)
     parser.add_argument("--simplified", type=bool, default=False)
 
+    parser.add_argument("--use_amp", action="store_true", default=False, help="Enable mixed precision (fp16) training.")
+    parser.add_argument("--gradient_checkpointing", action="store_true", default=False, help="Enable gradient checkpointing in Powerful to trade compute for memory.")
+
     return parser.parse_args()
 
 
