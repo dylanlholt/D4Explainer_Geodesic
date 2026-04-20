@@ -307,7 +307,7 @@ class DiffExplainer(Explainer):
                 train_fid.append(fid_drop)
                 train_sparsity.append(modif_r.item())
                 train_remain.append(remain_r.item())
-            scheduler.step(epoch)
+            scheduler.step()
             mean_train_loss = np.mean(train_losses)
             mean_train_acc = 1- np.mean(train_acc)
             mean_train_fidelity = np.mean(train_fid)

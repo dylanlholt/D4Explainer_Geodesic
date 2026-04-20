@@ -1,4 +1,6 @@
 import argparse
+import os
+os.environ.setdefault('TF_FORCE_GPU_ALLOW_GROWTH', 'true')
 
 import torch
 from torch_geometric.loader import DataLoader
