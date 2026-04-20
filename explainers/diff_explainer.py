@@ -1,4 +1,6 @@
+import json
 import os
+import time
 
 import numpy as np
 import torch
@@ -21,6 +23,12 @@ from explainers.diffusion.graph_utils import (
 from explainers.diffusion.pgnn import Powerful
 
 
+def get_exp_dir(args):
+    """Experiment output directory. With --run_name, nests under a run folder so baseline/extension don't clobber."""
+    run_name = getattr(args, "run_name", None) or ""
+    return os.path.join(args.root, args.dataset, run_name)
+
+
 def model_save(args, model, mean_train_loss, best_sparsity, mean_test_acc):
     """
     Save the model to disk
@@ -36,10 +44,29 @@ def model_save(args, model, mean_train_loss, best_sparsity, mean_test_acc):
         "eval sparsity": best_sparsity,
         "eval acc": mean_test_acc,
     }
-    exp_dir = f"{args.root}/{args.dataset}/"
+    exp_dir = get_exp_dir(args)
     os.makedirs(exp_dir, exist_ok=True)
     torch.save(to_save, os.path.join(exp_dir, "best_model.pth"))
     print(f"save model to {exp_dir}/best_model.pth")
+
+
+def _write_config(args):
+    """Snapshot all args to config.json once at training start."""
+    exp_dir = get_exp_dir(args)
+    os.makedirs(exp_dir, exist_ok=True)
+    cfg = {k: (str(v) if not isinstance(v, (int, float, str, bool, type(None), list)) else v)
+           for k, v in vars(args).items()}
+    cfg["_start_time"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    with open(os.path.join(exp_dir, "config.json"), "w") as f:
+        json.dump(cfg, f, indent=2)
+
+
+def _append_metrics(args, record):
+    """Append one JSONL record to metrics.jsonl."""
+    exp_dir = get_exp_dir(args)
+    os.makedirs(exp_dir, exist_ok=True)
+    with open(os.path.join(exp_dir, "metrics.jsonl"), "a") as f:
+        f.write(json.dumps(record) + "\n")
 
 
 def loss_func_bce(score_list, groundtruth, sigma_list, mask, device, sparsity_level, total_sigmas=None):
@@ -216,6 +243,7 @@ class DiffExplainer(Explainer):
         :param test_dataset: test dataset
         """
         best_sparsity = np.inf
+        _write_config(args)
         use_amp = getattr(args, "use_amp", False) and args.device.type == "cuda"
         scaler = GradScaler("cuda", enabled=use_amp)
         optimizer = torch.optim.Adam(
@@ -225,6 +253,7 @@ class DiffExplainer(Explainer):
         noise_list = args.noise_list
         for epoch in range(args.epoch):
             print(f"start epoch {epoch}")
+            epoch_start_time = time.time()
             train_losses = []
             train_loss_dist = []
             train_loss_cf = []
@@ -437,9 +466,32 @@ class DiffExplainer(Explainer):
                         f"test average modification: {mean_test_sparsity} | "
                     )
                 )
-                if mean_test_sparsity < best_sparsity:
+                is_best = mean_test_sparsity < best_sparsity
+                if is_best:
                     best_sparsity = mean_test_sparsity
                     model_save(args, model, mean_train_loss, best_sparsity, mean_test_acc)
+
+            record = {
+                "epoch": int(epoch),
+                "elapsed_sec": round(time.time() - epoch_start_time, 2),
+                "train_loss": float(mean_train_loss),
+                "train_loss_dist": float(np.mean(train_loss_dist)),
+                "train_loss_cf": float(np.mean(train_loss_cf)),
+                "train_acc": float(mean_train_acc),
+                "train_fid": float(mean_train_fidelity),
+                "train_sparsity": float(mean_train_sparsity),
+                "train_remain": float(np.mean(train_remain)),
+                "lr": float(optimizer.param_groups[0]["lr"]),
+            }
+            if (epoch + 1) % args.verbose == 0:
+                record.update({
+                    "test_loss": float(mean_test_loss),
+                    "test_acc": float(mean_test_acc),
+                    "test_fid": float(mean_test_fid),
+                    "test_sparsity": float(mean_test_sparsity),
+                    "is_best": bool(is_best),
+                })
+            _append_metrics(args, record)
 
     def explain_evaluation(self, args, graph):
         """

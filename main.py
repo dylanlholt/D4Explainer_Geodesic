@@ -52,6 +52,7 @@ def parse_args():
     parser.add_argument("--max_graph_size", type=int, default=None, help="Drop training graphs with num_nodes > max_graph_size before training (outlier cap; typically used with Mutagenicity to exclude a handful of 200+ node graphs).")
     parser.add_argument("--natural_gradient", action="store_true", default=False, help="[Extension] Apply diagonal Fisher-Rao natural-gradient rescaling to score tensors. Off = paper baseline.")
     parser.add_argument("--nat_grad_eps", type=float, default=1e-6, help="[Extension] Boundary clamp for θ in natural-gradient hook to prevent vanishing/exploding gradient at θ∈{0,1}.")
+    parser.add_argument("--run_name", type=str, default=None, help="Optional subfolder under results/{dataset}/ for this run's artifacts (best_model.pth, config.json, metrics.jsonl). Use to keep baseline and extension runs separate.")
 
     return parser.parse_args()
 
