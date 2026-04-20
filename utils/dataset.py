@@ -1,6 +1,43 @@
 import os
 
+import numpy as np
+from torch.utils.data import Sampler
+
 from datasets import NCI1, BA3Motif, Mutagenicity, SynGraphDataset, WebDataset, bbbp
+
+
+class SizeBucketedBatchSampler(Sampler):
+    """Batches graphs by node count so each batch pads to a tight N.
+
+    Graphs are sorted by num_nodes then sliced into batches of size ``batch_size``.
+    Per epoch, the *order* of batches is shuffled but membership is fixed — this
+    keeps padded N close to the max node count of each bucket and prevents a
+    single large outlier graph from inflating every batch it lands in.
+    """
+
+    def __init__(self, dataset, batch_size, shuffle=True):
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        sizes = np.array([int(dataset[i].num_nodes) for i in range(len(dataset))])
+        self.sorted_indices = np.argsort(sizes, kind="stable")
+
+    def __iter__(self):
+        batches = [
+            self.sorted_indices[i : i + self.batch_size].tolist()
+            for i in range(0, len(self.sorted_indices), self.batch_size)
+        ]
+        if self.shuffle:
+            np.random.shuffle(batches)
+        for batch in batches:
+            yield batch
+
+    def __len__(self):
+        return (len(self.sorted_indices) + self.batch_size - 1) // self.batch_size
+
+
+def filter_by_max_size(dataset, max_nodes):
+    """Return indices of graphs with num_nodes <= max_nodes (caller slices the dataset)."""
+    return [i for i in range(len(dataset)) if int(dataset[i].num_nodes) <= max_nodes]
 
 
 def get_datasets(name, root="data/"):

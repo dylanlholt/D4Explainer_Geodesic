@@ -8,6 +8,7 @@ from torch_geometric.loader import DataLoader
 from torch_geometric.utils import to_undirected
 
 from explainers.base import Explainer
+from utils.dataset import SizeBucketedBatchSampler
 from explainers.diffusion.graph_utils import (
     discretenoise_single,
     gen_full,
@@ -231,7 +232,13 @@ class DiffExplainer(Explainer):
             train_sparsity = []
             train_remain = []
             model.train()
-            train_loader = DataLoader(train_dataset, batch_size=args.train_batchsize, shuffle=True)
+            if getattr(args, "size_bucketed", False):
+                batch_sampler = SizeBucketedBatchSampler(
+                    train_dataset, batch_size=args.train_batchsize, shuffle=True
+                )
+                train_loader = DataLoader(train_dataset, batch_sampler=batch_sampler)
+            else:
+                train_loader = DataLoader(train_dataset, batch_size=args.train_batchsize, shuffle=True)
             for i, graph in enumerate(train_loader):
                 if graph.is_directed():
                     edge_index_temp = graph.edge_index

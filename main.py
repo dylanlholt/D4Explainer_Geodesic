@@ -7,7 +7,7 @@ from torch_geometric.loader import DataLoader
 from constants import feature_dict, task_type, dataset_choices
 from explainers import *
 from gnns import *
-from utils.dataset import get_datasets
+from utils.dataset import filter_by_max_size, get_datasets
 
 
 def parse_args():
@@ -48,6 +48,8 @@ def parse_args():
     parser.add_argument("--use_amp", action="store_true", default=False, help="Enable mixed precision (fp16) training.")
     parser.add_argument("--gradient_checkpointing", action="store_true", default=False, help="Enable gradient checkpointing in Powerful to trade compute for memory.")
     parser.add_argument("--debug_shapes", action="store_true", default=False, help="Print padded N, real node counts, and CUDA memory for first 5 batches of each epoch.")
+    parser.add_argument("--size_bucketed", action="store_true", default=False, help="Use a node-count-bucketed batch sampler so each batch pads to a tight N (reduces peak memory on size-heterogeneous datasets like Mutagenicity).")
+    parser.add_argument("--max_graph_size", type=int, default=None, help="Drop training graphs with num_nodes > max_graph_size before training (outlier cap; typically used with Mutagenicity to exclude a handful of 200+ node graphs).")
 
     return parser.parse_args()
 
@@ -61,6 +63,11 @@ args.task = task_type[args.dataset]
 train_dataset, val_dataset, test_dataset = get_datasets(name=args.dataset)
 
 train_dataset = train_dataset[: args.data_size]
+if args.max_graph_size is not None:
+    keep = filter_by_max_size(train_dataset, args.max_graph_size)
+    kept, total = len(keep), len(train_dataset)
+    print(f"[max_graph_size={args.max_graph_size}] keeping {kept}/{total} training graphs")
+    train_dataset = train_dataset[keep]
 gnn_path = f"param/gnns/{args.dataset}_{args.gnn_type}.pt"
 explainer = DiffExplainer(args.device, gnn_path)
 
