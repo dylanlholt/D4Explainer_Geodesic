@@ -8,6 +8,7 @@ from torch_geometric.loader import DataLoader
 from torch_geometric.utils import to_undirected
 
 from explainers.base import Explainer
+from explainers.natural_gradient import register_natural_gradient_hook
 from utils.dataset import SizeBucketedBatchSampler
 from explainers.diffusion.graph_utils import (
     discretenoise_single,
@@ -274,6 +275,9 @@ class DiffExplainer(Explainer):
                 def run_model(node_features, A, mask, sigma):
                     return model(node_features=node_features, A=A, mask=mask, noiselevel=sigma)
 
+                use_nat_grad = getattr(args, "natural_gradient", False)
+                nat_grad_eps = getattr(args, "nat_grad_eps", 1e-6)
+
                 # BCE: one sigma at a time — backward after each to free activations
                 for j, sigma in enumerate(sigma_list):
                     noise_adj_j, _ = discretenoise_single(train_adj_b, train_node_flag_b, sigma, args.device)
@@ -282,6 +286,8 @@ class DiffExplainer(Explainer):
                             score_j = grad_checkpoint(run_model, train_x_b, noise_adj_j, mask, sigma, use_reentrant=False)
                         else:
                             score_j = model(A=noise_adj_j, node_features=train_x_b, mask=mask, noiselevel=sigma)
+                        if use_nat_grad:
+                            register_natural_gradient_hook(score_j, epsilon=nat_grad_eps)
                         bce_j = loss_func_bce(
                             score_j.squeeze(-1),
                             train_adj_b,
@@ -302,6 +308,8 @@ class DiffExplainer(Explainer):
                         score_cf = grad_checkpoint(run_model, train_x_b, noise_adj_cf, mask, sigma_cf, use_reentrant=False)
                     else:
                         score_cf = model(A=noise_adj_cf, node_features=train_x_b, mask=mask, noiselevel=sigma_cf)
+                    if use_nat_grad:
+                        register_natural_gradient_hook(score_cf, epsilon=nat_grad_eps)
                     graph_batch_sub = tensor2graph(graph, [score_cf], mask)
                     y_pred, y_exp = gnn_pred(graph, graph_batch_sub, gnn_model, ds=args.dataset, task=args.task)
                     full_edge_index = gen_full(graph.batch, mask)
