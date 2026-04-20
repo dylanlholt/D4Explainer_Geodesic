@@ -239,6 +239,16 @@ class DiffExplainer(Explainer):
                 graph.to(args.device)
                 train_adj_b, train_x_b = graph2tensor(graph, device=args.device)
                 # train_adj_b: [bsz, N, N]; train_x_b: [bsz, N, C]
+                if getattr(args, "debug_shapes", False) and i < 5:
+                    bsz, N = train_adj_b.size(0), train_adj_b.size(-1)
+                    real_nodes = train_adj_b.sum(-1).gt(1e-5).sum(-1)
+                    mem_mb = torch.cuda.memory_allocated() / 1024**2 if args.device.type == "cuda" else 0
+                    print(
+                        f"[debug] batch {i}: bsz={bsz}, padded N={N}, "
+                        f"real nodes per graph min/mean/max={real_nodes.min().item()}/"
+                        f"{real_nodes.float().mean().item():.1f}/{real_nodes.max().item()}, "
+                        f"cuda mem={mem_mb:.0f} MB"
+                    )
                 sigma_list = (
                     list(np.random.uniform(low=args.prob_low, high=args.prob_high, size=args.sigma_length))
                     if noise_list is None

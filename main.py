@@ -47,6 +47,7 @@ def parse_args():
 
     parser.add_argument("--use_amp", action="store_true", default=False, help="Enable mixed precision (fp16) training.")
     parser.add_argument("--gradient_checkpointing", action="store_true", default=False, help="Enable gradient checkpointing in Powerful to trade compute for memory.")
+    parser.add_argument("--debug_shapes", action="store_true", default=False, help="Print padded N, real node counts, and CUDA memory for first 5 batches of each epoch.")
 
     return parser.parse_args()
 
