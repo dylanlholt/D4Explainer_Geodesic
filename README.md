@@ -70,6 +70,10 @@ Each run writes:
 
 Compare the two `metrics.jsonl` files to isolate the contribution of the natural-gradient update.
 
+### Tested environment
+
+The extension itself adds no new Python dependencies — `explainers/natural_gradient.py` is a backward hook using only existing torch ops. Tested against **PyTorch 2.x + torch-geometric 2.x** (conda env `d4explainer-geo`). The pinned `torch==1.10.1` in `requirements.txt` is the original paper's environment and predates this fork.
+
 ### Extension CLI flags
 
 | Flag | Default | Purpose |
@@ -84,16 +88,18 @@ Compare the two `metrics.jsonl` files to isolate the contribution of the natural
 
 The repo's CLI defaults diverge from the values reported in the paper. Use the following per-dataset settings to reproduce paper-comparable numbers:
 
-| Dataset | `--train_batchsize` | `--alpha_cf` | `--epoch` |
-|---|---|---|---|
-| BA-shapes | 4 | (see paper) | 1500 |
-| Tree-Cycle | 32 | (see paper) | 1500 |
-| Tree-Grids | 32 | (see paper) | 1500 |
-| Cornell | 4 | (see paper) | 1500 |
-| BA-3Motif | 32 | (see paper) | 1500 |
-| Mutag | 2 | 0.001 | 1500 |
-| BBBP | 16 | (see paper) | 1500 |
-| NCI1 | 32 | (see paper) | 1500 |
+| Dataset | `--n_hidden` | `--num_layers` | `--train_batchsize` | `--alpha_cf` |
+|---|---|---|---|---|
+| BA-shapes | 64 | 6 | 4 | 0.005 |
+| Tree-Cycle | 64 | 6 | 32 | 0.1 |
+| Tree-Grids | 128 | 8 | 32 | 0.05 |
+| Cornell | 128 | 6 | 4 | 0.05 |
+| BA-3Motif | 128 | 6 | 32 | 0.05 |
+| Mutag | 64 | 6 | 2 | 0.001 |
+| BBBP | 128 | 6 | 16 | 0.005 |
+| NCI1 | 128 | 6 | 32 | 0.01 |
+
+The paper reports training for `--epoch 1500` across all datasets.
 
 > **Note:** The repo's `--dataset mutag` flag loads **Mutagenicity** (4,337 graphs, max ~417 nodes), not the classic TU MUTAG (188 graphs, max 28). The D4Explainer authors kept the imprecise label; the paper's reported "MUTAG" numbers are trained on Mutagenicity.
 
@@ -104,7 +110,7 @@ python main.py --dataset mutag --train_batchsize 2 --alpha_cf 0.001 --epoch 1500
 
 ---
 
-# Original README
+# Original Paper Implementation
 
 # D4Explainer: In-distribution Explanations of Graph Neural Network via Discrete Denoising Diffusion [NeurIPS 2023]
 This is the Pytorch implementation of " D4Explainer: In-distribution Explanations of Graph Neural Network via Discrete Denoising Diffusion"
