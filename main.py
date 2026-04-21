@@ -45,7 +45,8 @@ def parse_args():
     parser.add_argument("--noise_mlp", type=bool, default=True)
     parser.add_argument("--simplified", type=bool, default=False)
 
-    parser.add_argument("--use_amp", action="store_true", default=False, help="Enable mixed precision (fp16) training.")
+    parser.add_argument("--memory_efficient", action="store_true", default=False, help="Opt into per-sigma BCE backward + single-sigma CF approximation. Off = paper-faithful batched-sigma loop (single backward, exact CF averaged over all sigmas). Turn on only when the paper loop OOMs.")
+    parser.add_argument("--use_amp", action="store_true", default=False, help="Enable mixed precision (fp16) training. Only applied in --memory_efficient mode.")
     parser.add_argument("--gradient_checkpointing", action="store_true", default=False, help="Enable gradient checkpointing in Powerful to trade compute for memory.")
     parser.add_argument("--debug_shapes", action="store_true", default=False, help="Print padded N, real node counts, and CUDA memory for first 5 batches of each epoch.")
     parser.add_argument("--size_bucketed", action="store_true", default=False, help="Use a node-count-bucketed batch sampler so each batch pads to a tight N (reduces peak memory on size-heterogeneous datasets like Mutagenicity).")

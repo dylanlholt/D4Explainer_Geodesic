@@ -295,68 +295,121 @@ class DiffExplainer(Explainer):
                 if isinstance(sigma_list, float):
                     sigma_list = [sigma_list]
 
-                mask = generate_mask(train_node_flag_b).to(args.device)
-                optimizer.zero_grad()
-                total_bce_val = 0.0
-
-                use_gc = getattr(args, "gradient_checkpointing", False)
-
-                def run_model(node_features, A, mask, sigma):
-                    return model(node_features=node_features, A=A, mask=mask, noiselevel=sigma)
-
                 use_nat_grad = getattr(args, "natural_gradient", False)
                 nat_grad_eps = getattr(args, "nat_grad_eps", 1e-6)
 
-                # BCE: one sigma at a time — backward after each to free activations
-                for j, sigma in enumerate(sigma_list):
-                    noise_adj_j, _ = discretenoise_single(train_adj_b, train_node_flag_b, sigma, args.device)
+                if getattr(args, "memory_efficient", False):
+                    # Per-sigma BCE backward + single-sigma CF approximation.
+                    # Opt in for large-graph OOM cases (e.g., Mutagenicity at high bsz).
+                    mask = generate_mask(train_node_flag_b).to(args.device)
+                    optimizer.zero_grad()
+                    total_bce_val = 0.0
+                    use_gc = getattr(args, "gradient_checkpointing", False)
+
+                    def run_model(node_features, A, mask, sigma):
+                        return model(node_features=node_features, A=A, mask=mask, noiselevel=sigma)
+
+                    for j, sigma in enumerate(sigma_list):
+                        noise_adj_j, _ = discretenoise_single(train_adj_b, train_node_flag_b, sigma, args.device)
+                        with autocast("cuda", enabled=use_amp):
+                            if use_gc:
+                                score_j = grad_checkpoint(run_model, train_x_b, noise_adj_j, mask, sigma, use_reentrant=False)
+                            else:
+                                score_j = model(A=noise_adj_j, node_features=train_x_b, mask=mask, noiselevel=sigma)
+                            if use_nat_grad:
+                                register_natural_gradient_hook(score_j, epsilon=nat_grad_eps)
+                            bce_j = loss_func_bce(
+                                score_j.squeeze(-1),
+                                train_adj_b,
+                                [sigma],
+                                mask,
+                                args.device,
+                                args.sparsity_level,
+                                total_sigmas=len(sigma_list),
+                            )
+                        scaler.scale(bce_j / len(sigma_list)).backward()
+                        total_bce_val += bce_j.item() / len(sigma_list)
+
+                    sigma_cf = sigma_list[-1]
+                    noise_adj_cf, _ = discretenoise_single(train_adj_b, train_node_flag_b, sigma_cf, args.device)
                     with autocast("cuda", enabled=use_amp):
                         if use_gc:
-                            score_j = grad_checkpoint(run_model, train_x_b, noise_adj_j, mask, sigma, use_reentrant=False)
+                            score_cf = grad_checkpoint(run_model, train_x_b, noise_adj_cf, mask, sigma_cf, use_reentrant=False)
                         else:
-                            score_j = model(A=noise_adj_j, node_features=train_x_b, mask=mask, noiselevel=sigma)
+                            score_cf = model(A=noise_adj_cf, node_features=train_x_b, mask=mask, noiselevel=sigma_cf)
                         if use_nat_grad:
-                            register_natural_gradient_hook(score_j, epsilon=nat_grad_eps)
-                        bce_j = loss_func_bce(
-                            score_j.squeeze(-1),
-                            train_adj_b,
-                            [sigma],
-                            mask,
-                            args.device,
-                            args.sparsity_level,
-                            total_sigmas=len(sigma_list),
+                            register_natural_gradient_hook(score_cf, epsilon=nat_grad_eps)
+                        graph_batch_sub = tensor2graph(graph, [score_cf], mask)
+                        y_pred, y_exp = gnn_pred(graph, graph_batch_sub, gnn_model, ds=args.dataset, task=args.task)
+                        full_edge_index = gen_full(graph.batch, mask)
+                        loss_cf, fid_drop, acc_cf = loss_cf_exp(
+                            gnn_model, graph, [score_cf], y_pred, y_exp, full_edge_index, mask, ds=args.dataset, task=args.task
                         )
-                    scaler.scale(bce_j / len(sigma_list)).backward()
-                    total_bce_val += bce_j.item() / len(sigma_list)
+                        loss_cf_scaled = args.alpha_cf * loss_cf
+                    scaler.scale(loss_cf_scaled).backward()
+                    scaler.step(optimizer)
+                    scaler.update()
 
-                # CF loss: one forward with the last sigma, keeps gradient through score
-                sigma_cf = sigma_list[-1]
-                noise_adj_cf, _ = discretenoise_single(train_adj_b, train_node_flag_b, sigma_cf, args.device)
-                with autocast("cuda", enabled=use_amp):
-                    if use_gc:
-                        score_cf = grad_checkpoint(run_model, train_x_b, noise_adj_cf, mask, sigma_cf, use_reentrant=False)
-                    else:
-                        score_cf = model(A=noise_adj_cf, node_features=train_x_b, mask=mask, noiselevel=sigma_cf)
-                    if use_nat_grad:
-                        register_natural_gradient_hook(score_cf, epsilon=nat_grad_eps)
-                    graph_batch_sub = tensor2graph(graph, [score_cf], mask)
+                    with torch.no_grad():
+                        modif_r = sparsity([score_cf], train_adj_b, mask)
+                        remain_r = sparsity([score_cf], train_adj_b, train_adj_b)
+
+                    total_loss_val = total_bce_val + loss_cf_scaled.item()
+                    total_bce_val_final = total_bce_val
+                    total_cf_val = loss_cf.item()
+                else:
+                    # Paper-faithful path: one concat forward over all sigmas, exact CF averaged
+                    # over all sigmas, single loss.backward(). Matches commit 2cead28.
+                    (train_x_b_rep, train_ori_adj_b, train_node_flag_sigma, train_noise_adj_b, _) = gen_list_of_data_single(
+                        train_x_b, train_adj_b, train_node_flag_b, sigma_list, args
+                    )
+                    optimizer.zero_grad()
+                    train_noise_adj_b_chunked = train_noise_adj_b.chunk(len(sigma_list), dim=0)
+                    train_x_b_chunked = train_x_b_rep.chunk(len(sigma_list), dim=0)
+                    train_node_flag_sigma = train_node_flag_sigma.chunk(len(sigma_list), dim=0)
+                    score = []
+                    masks = []
+                    for j, sigma in enumerate(sigma_list):
+                        mask = generate_mask(train_node_flag_sigma[j])
+                        score_batch = model(
+                            A=train_noise_adj_b_chunked[j].to(args.device),
+                            node_features=train_x_b_chunked[j].to(args.device),
+                            mask=mask.to(args.device),
+                            noiselevel=sigma,
+                        )
+                        if use_nat_grad:
+                            register_natural_gradient_hook(score_batch, epsilon=nat_grad_eps)
+                        score.append(score_batch)
+                        masks.append(mask)
+                    graph_batch_sub = tensor2graph(graph, score, mask)
                     y_pred, y_exp = gnn_pred(graph, graph_batch_sub, gnn_model, ds=args.dataset, task=args.task)
                     full_edge_index = gen_full(graph.batch, mask)
+                    score_b = torch.cat(score, dim=0).squeeze(-1).to(args.device)
+                    masktens = torch.cat(masks, dim=0).to(args.device)
+                    modif_r = sparsity(score, train_adj_b, mask)
+                    remain_r = sparsity(score, train_adj_b, train_adj_b)
                     loss_cf, fid_drop, acc_cf = loss_cf_exp(
-                        gnn_model, graph, [score_cf], y_pred, y_exp, full_edge_index, mask, ds=args.dataset, task=args.task
+                        gnn_model, graph, score, y_pred, y_exp, full_edge_index, mask, ds=args.dataset, task=args.task
                     )
-                    loss_cf_scaled = args.alpha_cf * loss_cf
-                scaler.scale(loss_cf_scaled).backward()
-                scaler.step(optimizer)
-                scaler.update()
+                    loss_dist = loss_func_bce(
+                        score_b,
+                        train_ori_adj_b,
+                        sigma_list,
+                        masktens,
+                        device=args.device,
+                        sparsity_level=args.sparsity_level,
+                    )
+                    loss = loss_dist + args.alpha_cf * loss_cf
+                    loss.backward()
+                    optimizer.step()
 
-                with torch.no_grad():
-                    modif_r = sparsity([score_cf], train_adj_b, mask)
-                    remain_r = sparsity([score_cf], train_adj_b, train_adj_b)
+                    total_loss_val = loss.item()
+                    total_bce_val_final = loss_dist.item()
+                    total_cf_val = loss_cf.item()
 
-                train_losses.append(total_bce_val + loss_cf_scaled.item())
-                train_loss_dist.append(total_bce_val)
-                train_loss_cf.append(loss_cf.item())
+                train_losses.append(total_loss_val)
+                train_loss_dist.append(total_bce_val_final)
+                train_loss_cf.append(total_cf_val)
                 train_acc.append(acc_cf)
                 train_fid.append(fid_drop)
                 train_sparsity.append(modif_r.item())
