@@ -24,7 +24,7 @@ def parse_args():
     parser.add_argument(
         "--model_path",
         nargs="?",
-        default=osp.join(osp.dirname(__file__), "param", "gnns"),
+        default=osp.join(osp.dirname(__file__), "..", "param", "gnns"),
         help="path for saving trained model.",
     )
     parser.add_argument("--cuda", type=int, default=0, help="GPU device.")

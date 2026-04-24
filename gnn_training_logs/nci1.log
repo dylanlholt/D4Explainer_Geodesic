@@ -1,0 +1,303 @@
+/opt/anaconda3/envs/d4explainer/lib/python3.8/site-packages/torch_geometric/deprecation.py:26: UserWarning: 'data.DataLoader' is deprecated, use 'loader.DataLoader' instead
+  warnings.warn(out)
+Epoch   1[6.712s]: LR: 0.00100, Loss: 0.69192, Train acc: 0.51479, Validation Loss: 0.69606, Validation acc: 0.472000
+Epoch   2[2.828s]: LR: 0.00100, Loss: 0.67962, Train acc: 0.58103, Validation Loss: 0.67840, Validation acc: 0.552000
+Epoch   3[3.391s]: LR: 0.00100, Loss: 0.66634, Train acc: 0.60900, Validation Loss: 0.68213, Validation acc: 0.588000
+Epoch   4[6.884s]: LR: 0.00100, Loss: 0.65825, Train acc: 0.62186, Validation Loss: 0.69364, Validation acc: 0.590000
+Epoch   5[5.551s]: LR: 0.00100, Loss: 0.65430, Train acc: 0.61286, Validation Loss: 0.66457, Validation acc: 0.584000
+Epoch   6[9.859s]: LR: 0.00100, Loss: 0.63964, Train acc: 0.65788, Validation Loss: 0.65070, Validation acc: 0.614000
+Epoch   7[7.801s]: LR: 0.00100, Loss: 0.62487, Train acc: 0.62572, Validation Loss: 0.69413, Validation acc: 0.578000
+Epoch   8[7.860s]: LR: 0.00100, Loss: 0.61545, Train acc: 0.68392, Validation Loss: 0.62949, Validation acc: 0.644000
+Epoch   9[6.031s]: LR: 0.00100, Loss: 0.60215, Train acc: 0.68778, Validation Loss: 0.62432, Validation acc: 0.656000
+Epoch  10[2.812s]: LR: 0.00100, Loss: 0.60149, Test Loss: 0.60485, Test acc: 0.69000
+Epoch  11[2.675s]: LR: 0.00100, Loss: 0.58529, Train acc: 0.69453, Validation Loss: 0.60316, Validation acc: 0.654000
+Epoch  12[2.538s]: LR: 0.00100, Loss: 0.58114, Train acc: 0.70193, Validation Loss: 0.60024, Validation acc: 0.672000
+Epoch  13[2.662s]: LR: 0.00100, Loss: 0.57493, Train acc: 0.70161, Validation Loss: 0.59829, Validation acc: 0.670000
+Epoch  14[2.954s]: LR: 0.00100, Loss: 0.57119, Train acc: 0.72026, Validation Loss: 0.59236, Validation acc: 0.666000
+Epoch  15[2.857s]: LR: 0.00100, Loss: 0.56024, Train acc: 0.73698, Validation Loss: 0.58603, Validation acc: 0.700000
+Epoch  16[2.798s]: LR: 0.00100, Loss: 0.56417, Train acc: 0.72637, Validation Loss: 0.58965, Validation acc: 0.690000
+Epoch  17[2.686s]: LR: 0.00100, Loss: 0.55525, Train acc: 0.73762, Validation Loss: 0.59540, Validation acc: 0.704000
+Epoch  18[2.413s]: LR: 0.00100, Loss: 0.55358, Train acc: 0.72283, Validation Loss: 0.58119, Validation acc: 0.698000
+Epoch  19[2.470s]: LR: 0.00100, Loss: 0.56241, Train acc: 0.74662, Validation Loss: 0.58280, Validation acc: 0.720000
+Epoch  20[2.980s]: LR: 0.00100, Loss: 0.54984, Test Loss: 0.56220, Test acc: 0.73000
+Epoch  21[2.539s]: LR: 0.00100, Loss: 0.54279, Train acc: 0.73441, Validation Loss: 0.60114, Validation acc: 0.696000
+Epoch  22[2.534s]: LR: 0.00100, Loss: 0.54301, Train acc: 0.73987, Validation Loss: 0.58018, Validation acc: 0.718000
+Epoch  23[8.061s]: LR: 0.00100, Loss: 0.54777, Train acc: 0.74309, Validation Loss: 0.57913, Validation acc: 0.694000
+Epoch  24[2.564s]: LR: 0.00100, Loss: 0.53429, Train acc: 0.74887, Validation Loss: 0.58278, Validation acc: 0.698000
+Epoch  25[3.148s]: LR: 0.00100, Loss: 0.53369, Train acc: 0.73698, Validation Loss: 0.58303, Validation acc: 0.694000
+Epoch  26[6.955s]: LR: 0.00100, Loss: 0.52714, Train acc: 0.75852, Validation Loss: 0.58458, Validation acc: 0.718000
+Epoch  27[4.405s]: LR: 0.00100, Loss: 0.53675, Train acc: 0.73119, Validation Loss: 0.57976, Validation acc: 0.716000
+Epoch  28[2.655s]: LR: 0.00100, Loss: 0.53779, Train acc: 0.76592, Validation Loss: 0.57707, Validation acc: 0.734000
+Epoch  29[2.457s]: LR: 0.00100, Loss: 0.52226, Train acc: 0.77203, Validation Loss: 0.57839, Validation acc: 0.738000
+Epoch  30[3.377s]: LR: 0.00100, Loss: 0.51706, Test Loss: 0.54289, Test acc: 0.72200
+Epoch  31[2.942s]: LR: 0.00100, Loss: 0.52020, Train acc: 0.75627, Validation Loss: 0.58184, Validation acc: 0.708000
+Epoch  32[2.477s]: LR: 0.00100, Loss: 0.51944, Train acc: 0.76013, Validation Loss: 0.57227, Validation acc: 0.728000
+Epoch  33[4.372s]: LR: 0.00100, Loss: 0.51829, Train acc: 0.77170, Validation Loss: 0.57490, Validation acc: 0.736000
+Epoch  34[7.384s]: LR: 0.00100, Loss: 0.51200, Train acc: 0.76334, Validation Loss: 0.59545, Validation acc: 0.724000
+Epoch  35[3.069s]: LR: 0.00100, Loss: 0.51670, Train acc: 0.77106, Validation Loss: 0.58521, Validation acc: 0.736000
+Epoch  36[2.324s]: LR: 0.00100, Loss: 0.50861, Train acc: 0.77588, Validation Loss: 0.57392, Validation acc: 0.738000
+Epoch  37[2.432s]: LR: 0.00100, Loss: 0.50887, Train acc: 0.76431, Validation Loss: 0.57589, Validation acc: 0.728000
+Epoch  38[3.628s]: LR: 0.00100, Loss: 0.50515, Train acc: 0.77878, Validation Loss: 0.57719, Validation acc: 0.742000
+Epoch  39[3.041s]: LR: 0.00100, Loss: 0.51014, Train acc: 0.76849, Validation Loss: 0.57957, Validation acc: 0.728000
+Epoch  40[2.337s]: LR: 0.00100, Loss: 0.50130, Test Loss: 0.53435, Test acc: 0.73600
+Epoch  41[2.756s]: LR: 0.00100, Loss: 0.50586, Train acc: 0.77814, Validation Loss: 0.58599, Validation acc: 0.744000
+Epoch  42[2.139s]: LR: 0.00100, Loss: 0.50328, Train acc: 0.77781, Validation Loss: 0.58036, Validation acc: 0.724000
+Epoch  43[2.145s]: LR: 0.00100, Loss: 0.49639, Train acc: 0.76592, Validation Loss: 0.59668, Validation acc: 0.728000
+Epoch  44[2.461s]: LR: 0.00080, Loss: 0.50121, Train acc: 0.77235, Validation Loss: 0.58088, Validation acc: 0.736000
+Epoch  45[2.158s]: LR: 0.00080, Loss: 0.50049, Train acc: 0.78199, Validation Loss: 0.58596, Validation acc: 0.746000
+Epoch  46[2.191s]: LR: 0.00080, Loss: 0.49212, Train acc: 0.78682, Validation Loss: 0.58236, Validation acc: 0.744000
+Epoch  47[2.144s]: LR: 0.00080, Loss: 0.49200, Train acc: 0.78328, Validation Loss: 0.57972, Validation acc: 0.736000
+Epoch  48[2.200s]: LR: 0.00080, Loss: 0.49537, Train acc: 0.78135, Validation Loss: 0.58071, Validation acc: 0.746000
+Epoch  49[2.199s]: LR: 0.00080, Loss: 0.48905, Train acc: 0.78103, Validation Loss: 0.57872, Validation acc: 0.728000
+Epoch  50[2.315s]: LR: 0.00080, Loss: 0.48352, Test Loss: 0.53306, Test acc: 0.75200
+Epoch  51[2.299s]: LR: 0.00080, Loss: 0.48598, Train acc: 0.77331, Validation Loss: 0.59732, Validation acc: 0.728000
+Epoch  52[2.378s]: LR: 0.00080, Loss: 0.47872, Train acc: 0.77749, Validation Loss: 0.58660, Validation acc: 0.738000
+Epoch  53[2.418s]: LR: 0.00080, Loss: 0.48014, Train acc: 0.77524, Validation Loss: 0.58775, Validation acc: 0.738000
+Epoch  54[2.192s]: LR: 0.00080, Loss: 0.48470, Train acc: 0.79003, Validation Loss: 0.58176, Validation acc: 0.754000
+Epoch  55[2.173s]: LR: 0.00064, Loss: 0.47205, Train acc: 0.79260, Validation Loss: 0.58726, Validation acc: 0.746000
+Epoch  56[2.164s]: LR: 0.00064, Loss: 0.46912, Train acc: 0.77942, Validation Loss: 0.59152, Validation acc: 0.742000
+Epoch  57[2.135s]: LR: 0.00064, Loss: 0.47822, Train acc: 0.75466, Validation Loss: 0.62360, Validation acc: 0.720000
+Epoch  58[2.168s]: LR: 0.00064, Loss: 0.47734, Train acc: 0.78103, Validation Loss: 0.59622, Validation acc: 0.736000
+Epoch  59[2.121s]: LR: 0.00064, Loss: 0.46665, Train acc: 0.79357, Validation Loss: 0.58025, Validation acc: 0.764000
+Epoch  60[2.225s]: LR: 0.00064, Loss: 0.46594, Test Loss: 0.52313, Test acc: 0.75600
+Epoch  61[2.123s]: LR: 0.00064, Loss: 0.46615, Train acc: 0.79775, Validation Loss: 0.59619, Validation acc: 0.748000
+Epoch  62[2.367s]: LR: 0.00064, Loss: 0.46138, Train acc: 0.79132, Validation Loss: 0.59151, Validation acc: 0.744000
+Epoch  63[2.237s]: LR: 0.00064, Loss: 0.45596, Train acc: 0.80064, Validation Loss: 0.58631, Validation acc: 0.748000
+Epoch  64[2.316s]: LR: 0.00064, Loss: 0.46300, Train acc: 0.75434, Validation Loss: 0.64711, Validation acc: 0.708000
+Epoch  65[2.397s]: LR: 0.00064, Loss: 0.48034, Train acc: 0.80064, Validation Loss: 0.59258, Validation acc: 0.758000
+Epoch  66[2.505s]: LR: 0.00051, Loss: 0.45859, Train acc: 0.79936, Validation Loss: 0.59441, Validation acc: 0.746000
+Epoch  67[2.386s]: LR: 0.00051, Loss: 0.46077, Train acc: 0.80193, Validation Loss: 0.58885, Validation acc: 0.750000
+Epoch  68[2.349s]: LR: 0.00051, Loss: 0.46018, Train acc: 0.80386, Validation Loss: 0.58870, Validation acc: 0.758000
+Epoch  69[2.178s]: LR: 0.00051, Loss: 0.45440, Train acc: 0.78907, Validation Loss: 0.59919, Validation acc: 0.744000
+Epoch  70[2.230s]: LR: 0.00051, Loss: 0.45537, Test Loss: 0.52506, Test acc: 0.73600
+Epoch  71[2.126s]: LR: 0.00051, Loss: 0.44911, Train acc: 0.77074, Validation Loss: 0.62646, Validation acc: 0.730000
+Epoch  72[2.154s]: LR: 0.00051, Loss: 0.45257, Train acc: 0.80707, Validation Loss: 0.59530, Validation acc: 0.766000
+Epoch  73[2.287s]: LR: 0.00051, Loss: 0.45705, Train acc: 0.80547, Validation Loss: 0.58883, Validation acc: 0.770000
+Epoch  74[2.369s]: LR: 0.00051, Loss: 0.44767, Train acc: 0.80354, Validation Loss: 0.59396, Validation acc: 0.758000
+Epoch  75[2.582s]: LR: 0.00051, Loss: 0.44895, Train acc: 0.78971, Validation Loss: 0.60531, Validation acc: 0.744000
+Epoch  76[2.270s]: LR: 0.00051, Loss: 0.44869, Train acc: 0.80386, Validation Loss: 0.60435, Validation acc: 0.764000
+Epoch  77[2.143s]: LR: 0.00041, Loss: 0.45019, Train acc: 0.80514, Validation Loss: 0.60798, Validation acc: 0.768000
+Epoch  78[2.162s]: LR: 0.00041, Loss: 0.44440, Train acc: 0.81029, Validation Loss: 0.59987, Validation acc: 0.758000
+Epoch  79[2.177s]: LR: 0.00041, Loss: 0.44408, Train acc: 0.81061, Validation Loss: 0.59770, Validation acc: 0.764000
+Epoch  80[2.207s]: LR: 0.00041, Loss: 0.44230, Test Loss: 0.52798, Test acc: 0.76200
+Epoch  81[2.319s]: LR: 0.00041, Loss: 0.44554, Train acc: 0.80032, Validation Loss: 0.60709, Validation acc: 0.760000
+Epoch  82[2.509s]: LR: 0.00041, Loss: 0.43971, Train acc: 0.80836, Validation Loss: 0.60270, Validation acc: 0.764000
+Epoch  83[2.954s]: LR: 0.00041, Loss: 0.44219, Train acc: 0.80772, Validation Loss: 0.60657, Validation acc: 0.764000
+Epoch  84[2.398s]: LR: 0.00041, Loss: 0.44439, Train acc: 0.80354, Validation Loss: 0.60494, Validation acc: 0.760000
+Epoch  85[2.372s]: LR: 0.00041, Loss: 0.43993, Train acc: 0.81447, Validation Loss: 0.60393, Validation acc: 0.770000
+Epoch  86[2.153s]: LR: 0.00041, Loss: 0.43572, Train acc: 0.80997, Validation Loss: 0.60595, Validation acc: 0.760000
+Epoch  87[2.112s]: LR: 0.00041, Loss: 0.43526, Train acc: 0.81318, Validation Loss: 0.60646, Validation acc: 0.758000
+Epoch  88[2.209s]: LR: 0.00033, Loss: 0.43399, Train acc: 0.81415, Validation Loss: 0.60146, Validation acc: 0.768000
+Epoch  89[2.163s]: LR: 0.00033, Loss: 0.44011, Train acc: 0.80418, Validation Loss: 0.60715, Validation acc: 0.756000
+Epoch  90[2.424s]: LR: 0.00033, Loss: 0.43993, Test Loss: 0.51693, Test acc: 0.76800
+Epoch  91[2.156s]: LR: 0.00033, Loss: 0.43524, Train acc: 0.80386, Validation Loss: 0.61401, Validation acc: 0.752000
+Epoch  92[2.166s]: LR: 0.00033, Loss: 0.43633, Train acc: 0.81704, Validation Loss: 0.60770, Validation acc: 0.768000
+Epoch  93[3.219s]: LR: 0.00033, Loss: 0.43649, Train acc: 0.80547, Validation Loss: 0.60876, Validation acc: 0.756000
+Epoch  94[3.587s]: LR: 0.00033, Loss: 0.43242, Train acc: 0.81254, Validation Loss: 0.61113, Validation acc: 0.770000
+Epoch  95[2.902s]: LR: 0.00033, Loss: 0.42853, Train acc: 0.80643, Validation Loss: 0.61085, Validation acc: 0.758000
+Epoch  96[2.671s]: LR: 0.00033, Loss: 0.42965, Train acc: 0.81447, Validation Loss: 0.61238, Validation acc: 0.770000
+Epoch  97[2.413s]: LR: 0.00033, Loss: 0.43150, Train acc: 0.81286, Validation Loss: 0.61504, Validation acc: 0.772000
+Epoch  98[2.204s]: LR: 0.00033, Loss: 0.43014, Train acc: 0.81350, Validation Loss: 0.61469, Validation acc: 0.764000
+Epoch  99[2.183s]: LR: 0.00026, Loss: 0.42563, Train acc: 0.81383, Validation Loss: 0.61635, Validation acc: 0.760000
+Epoch 100[2.226s]: LR: 0.00026, Loss: 0.42804, Test Loss: 0.51800, Test acc: 0.77200
+Epoch 101[2.157s]: LR: 0.00026, Loss: 0.42949, Train acc: 0.81801, Validation Loss: 0.61540, Validation acc: 0.770000
+Epoch 102[2.192s]: LR: 0.00026, Loss: 0.43452, Train acc: 0.81543, Validation Loss: 0.61154, Validation acc: 0.764000
+Epoch 103[2.200s]: LR: 0.00026, Loss: 0.42374, Train acc: 0.81447, Validation Loss: 0.61362, Validation acc: 0.764000
+Epoch 104[2.329s]: LR: 0.00026, Loss: 0.42764, Train acc: 0.81286, Validation Loss: 0.62045, Validation acc: 0.758000
+Epoch 105[2.231s]: LR: 0.00026, Loss: 0.42583, Train acc: 0.81865, Validation Loss: 0.61460, Validation acc: 0.764000
+Epoch 106[2.641s]: LR: 0.00026, Loss: 0.42524, Train acc: 0.81479, Validation Loss: 0.62048, Validation acc: 0.770000
+Epoch 107[3.061s]: LR: 0.00026, Loss: 0.42648, Train acc: 0.80740, Validation Loss: 0.62124, Validation acc: 0.754000
+Epoch 108[3.120s]: LR: 0.00026, Loss: 0.42795, Train acc: 0.81704, Validation Loss: 0.61316, Validation acc: 0.768000
+Epoch 109[2.293s]: LR: 0.00026, Loss: 0.42500, Train acc: 0.82026, Validation Loss: 0.61092, Validation acc: 0.756000
+Epoch 110[2.330s]: LR: 0.00021, Loss: 0.42438, Test Loss: 0.51662, Test acc: 0.77600
+Epoch 111[2.533s]: LR: 0.00021, Loss: 0.42512, Train acc: 0.82026, Validation Loss: 0.61481, Validation acc: 0.768000
+Epoch 112[2.185s]: LR: 0.00021, Loss: 0.42133, Train acc: 0.81833, Validation Loss: 0.61801, Validation acc: 0.764000
+Epoch 113[2.207s]: LR: 0.00021, Loss: 0.42270, Train acc: 0.81286, Validation Loss: 0.62517, Validation acc: 0.746000
+Epoch 114[2.213s]: LR: 0.00021, Loss: 0.42718, Train acc: 0.81897, Validation Loss: 0.61978, Validation acc: 0.762000
+Epoch 115[2.153s]: LR: 0.00021, Loss: 0.42081, Train acc: 0.81897, Validation Loss: 0.62071, Validation acc: 0.770000
+Epoch 116[2.143s]: LR: 0.00021, Loss: 0.42301, Train acc: 0.81672, Validation Loss: 0.62327, Validation acc: 0.760000
+Epoch 117[4.377s]: LR: 0.00021, Loss: 0.41951, Train acc: 0.81640, Validation Loss: 0.62199, Validation acc: 0.772000
+Epoch 118[3.015s]: LR: 0.00021, Loss: 0.41817, Train acc: 0.82219, Validation Loss: 0.61918, Validation acc: 0.778000
+Epoch 119[2.417s]: LR: 0.00021, Loss: 0.42146, Train acc: 0.81608, Validation Loss: 0.62455, Validation acc: 0.764000
+Epoch 120[2.840s]: LR: 0.00021, Loss: 0.42218, Test Loss: 0.51504, Test acc: 0.76600
+Epoch 121[3.289s]: LR: 0.00017, Loss: 0.42729, Train acc: 0.81929, Validation Loss: 0.61855, Validation acc: 0.780000
+Epoch 122[3.027s]: LR: 0.00017, Loss: 0.41802, Train acc: 0.81801, Validation Loss: 0.62256, Validation acc: 0.772000
+Epoch 123[2.657s]: LR: 0.00017, Loss: 0.41603, Train acc: 0.81961, Validation Loss: 0.62481, Validation acc: 0.762000
+Epoch 124[2.259s]: LR: 0.00017, Loss: 0.41579, Train acc: 0.82058, Validation Loss: 0.62289, Validation acc: 0.776000
+Epoch 125[2.187s]: LR: 0.00017, Loss: 0.41448, Train acc: 0.82347, Validation Loss: 0.62248, Validation acc: 0.768000
+Epoch 126[2.142s]: LR: 0.00017, Loss: 0.41815, Train acc: 0.82122, Validation Loss: 0.62628, Validation acc: 0.776000
+Epoch 127[2.123s]: LR: 0.00017, Loss: 0.41461, Train acc: 0.81736, Validation Loss: 0.62644, Validation acc: 0.756000
+Epoch 128[2.264s]: LR: 0.00017, Loss: 0.41447, Train acc: 0.82219, Validation Loss: 0.62090, Validation acc: 0.768000
+Epoch 129[2.223s]: LR: 0.00017, Loss: 0.41286, Train acc: 0.82154, Validation Loss: 0.62725, Validation acc: 0.780000
+Epoch 130[2.214s]: LR: 0.00017, Loss: 0.41255, Test Loss: 0.51678, Test acc: 0.76600
+Epoch 131[2.177s]: LR: 0.00017, Loss: 0.41540, Train acc: 0.81383, Validation Loss: 0.63356, Validation acc: 0.756000
+Epoch 132[2.111s]: LR: 0.00013, Loss: 0.42092, Train acc: 0.81961, Validation Loss: 0.62509, Validation acc: 0.758000
+Epoch 133[2.112s]: LR: 0.00013, Loss: 0.41669, Train acc: 0.82219, Validation Loss: 0.62683, Validation acc: 0.778000
+Epoch 134[2.172s]: LR: 0.00013, Loss: 0.42061, Train acc: 0.82476, Validation Loss: 0.62737, Validation acc: 0.770000
+Epoch 135[2.156s]: LR: 0.00013, Loss: 0.41870, Train acc: 0.82379, Validation Loss: 0.62744, Validation acc: 0.760000
+Epoch 136[2.154s]: LR: 0.00013, Loss: 0.41232, Train acc: 0.82476, Validation Loss: 0.62996, Validation acc: 0.776000
+Epoch 137[2.227s]: LR: 0.00013, Loss: 0.41327, Train acc: 0.82476, Validation Loss: 0.62791, Validation acc: 0.772000
+Epoch 138[2.112s]: LR: 0.00013, Loss: 0.40827, Train acc: 0.81961, Validation Loss: 0.63846, Validation acc: 0.758000
+Epoch 139[2.135s]: LR: 0.00013, Loss: 0.41178, Train acc: 0.82347, Validation Loss: 0.62976, Validation acc: 0.766000
+Epoch 140[2.219s]: LR: 0.00013, Loss: 0.41412, Test Loss: 0.52140, Test acc: 0.76200
+Epoch 141[2.193s]: LR: 0.00013, Loss: 0.41889, Train acc: 0.82315, Validation Loss: 0.63259, Validation acc: 0.762000
+Epoch 142[2.130s]: LR: 0.00013, Loss: 0.40964, Train acc: 0.82379, Validation Loss: 0.63449, Validation acc: 0.766000
+Epoch 143[2.107s]: LR: 0.00011, Loss: 0.41488, Train acc: 0.82605, Validation Loss: 0.63123, Validation acc: 0.770000
+Epoch 144[2.295s]: LR: 0.00011, Loss: 0.41382, Train acc: 0.82476, Validation Loss: 0.63179, Validation acc: 0.768000
+Epoch 145[2.136s]: LR: 0.00011, Loss: 0.40747, Train acc: 0.82251, Validation Loss: 0.63318, Validation acc: 0.758000
+Epoch 146[2.111s]: LR: 0.00011, Loss: 0.40622, Train acc: 0.82412, Validation Loss: 0.63098, Validation acc: 0.764000
+Epoch 147[2.444s]: LR: 0.00011, Loss: 0.40741, Train acc: 0.82412, Validation Loss: 0.63291, Validation acc: 0.772000
+Epoch 148[2.207s]: LR: 0.00011, Loss: 0.41505, Train acc: 0.82444, Validation Loss: 0.63204, Validation acc: 0.768000
+Epoch 149[2.553s]: LR: 0.00011, Loss: 0.40637, Train acc: 0.82476, Validation Loss: 0.63361, Validation acc: 0.768000
+Epoch 150[2.557s]: LR: 0.00011, Loss: 0.40844, Test Loss: 0.51821, Test acc: 0.77000
+Epoch 151[2.188s]: LR: 0.00011, Loss: 0.40653, Train acc: 0.82315, Validation Loss: 0.63668, Validation acc: 0.758000
+Epoch 152[2.272s]: LR: 0.00011, Loss: 0.41030, Train acc: 0.82508, Validation Loss: 0.63436, Validation acc: 0.774000
+Epoch 153[2.281s]: LR: 0.00011, Loss: 0.41347, Train acc: 0.82347, Validation Loss: 0.63253, Validation acc: 0.754000
+Epoch 154[2.159s]: LR: 0.00009, Loss: 0.40850, Train acc: 0.82637, Validation Loss: 0.63312, Validation acc: 0.768000
+Epoch 155[2.243s]: LR: 0.00009, Loss: 0.41017, Train acc: 0.82251, Validation Loss: 0.63749, Validation acc: 0.770000
+Epoch 156[2.161s]: LR: 0.00009, Loss: 0.41367, Train acc: 0.82315, Validation Loss: 0.63722, Validation acc: 0.752000
+Epoch 157[2.165s]: LR: 0.00009, Loss: 0.40670, Train acc: 0.82605, Validation Loss: 0.63451, Validation acc: 0.768000
+Epoch 158[2.126s]: LR: 0.00009, Loss: 0.40857, Train acc: 0.82701, Validation Loss: 0.63673, Validation acc: 0.762000
+Epoch 159[2.158s]: LR: 0.00009, Loss: 0.40634, Train acc: 0.82508, Validation Loss: 0.63760, Validation acc: 0.764000
+Epoch 160[2.236s]: LR: 0.00009, Loss: 0.40503, Test Loss: 0.51763, Test acc: 0.77200
+Epoch 161[2.160s]: LR: 0.00009, Loss: 0.40733, Train acc: 0.82637, Validation Loss: 0.63885, Validation acc: 0.760000
+Epoch 162[2.260s]: LR: 0.00009, Loss: 0.40401, Train acc: 0.81897, Validation Loss: 0.64164, Validation acc: 0.750000
+Epoch 163[2.114s]: LR: 0.00009, Loss: 0.41028, Train acc: 0.82540, Validation Loss: 0.63662, Validation acc: 0.772000
+Epoch 164[2.402s]: LR: 0.00009, Loss: 0.41179, Train acc: 0.82894, Validation Loss: 0.63452, Validation acc: 0.770000
+Epoch 165[2.151s]: LR: 0.00007, Loss: 0.40501, Train acc: 0.82669, Validation Loss: 0.63739, Validation acc: 0.766000
+Epoch 166[2.115s]: LR: 0.00007, Loss: 0.40366, Train acc: 0.82830, Validation Loss: 0.63568, Validation acc: 0.772000
+Epoch 167[2.158s]: LR: 0.00007, Loss: 0.40802, Train acc: 0.82830, Validation Loss: 0.63588, Validation acc: 0.776000
+Epoch 168[2.148s]: LR: 0.00007, Loss: 0.40754, Train acc: 0.82444, Validation Loss: 0.64007, Validation acc: 0.762000
+Epoch 169[2.199s]: LR: 0.00007, Loss: 0.40467, Train acc: 0.82508, Validation Loss: 0.63931, Validation acc: 0.768000
+Epoch 170[2.577s]: LR: 0.00007, Loss: 0.40691, Test Loss: 0.51643, Test acc: 0.76800
+Epoch 171[2.141s]: LR: 0.00007, Loss: 0.40421, Train acc: 0.82508, Validation Loss: 0.64200, Validation acc: 0.772000
+Epoch 172[2.091s]: LR: 0.00007, Loss: 0.41227, Train acc: 0.82605, Validation Loss: 0.64119, Validation acc: 0.772000
+Epoch 173[2.129s]: LR: 0.00007, Loss: 0.40273, Train acc: 0.82765, Validation Loss: 0.64136, Validation acc: 0.762000
+Epoch 174[2.103s]: LR: 0.00007, Loss: 0.40678, Train acc: 0.82830, Validation Loss: 0.63895, Validation acc: 0.772000
+Epoch 175[2.114s]: LR: 0.00007, Loss: 0.40639, Train acc: 0.82862, Validation Loss: 0.64072, Validation acc: 0.770000
+Epoch 176[2.089s]: LR: 0.00005, Loss: 0.40817, Train acc: 0.82669, Validation Loss: 0.64069, Validation acc: 0.768000
+Epoch 177[2.217s]: LR: 0.00005, Loss: 0.40679, Train acc: 0.82733, Validation Loss: 0.63787, Validation acc: 0.772000
+Epoch 178[3.037s]: LR: 0.00005, Loss: 0.40478, Train acc: 0.82605, Validation Loss: 0.64169, Validation acc: 0.766000
+Epoch 179[2.562s]: LR: 0.00005, Loss: 0.40660, Train acc: 0.82605, Validation Loss: 0.64012, Validation acc: 0.768000
+Epoch 180[2.306s]: LR: 0.00005, Loss: 0.40630, Test Loss: 0.51658, Test acc: 0.76000
+Epoch 181[2.131s]: LR: 0.00005, Loss: 0.40631, Train acc: 0.82797, Validation Loss: 0.64190, Validation acc: 0.770000
+Epoch 182[2.196s]: LR: 0.00005, Loss: 0.39939, Train acc: 0.82797, Validation Loss: 0.64234, Validation acc: 0.768000
+Epoch 183[2.119s]: LR: 0.00005, Loss: 0.40666, Train acc: 0.82637, Validation Loss: 0.64085, Validation acc: 0.752000
+Epoch 184[2.111s]: LR: 0.00005, Loss: 0.40218, Train acc: 0.82958, Validation Loss: 0.64278, Validation acc: 0.772000
+Epoch 185[2.081s]: LR: 0.00005, Loss: 0.39993, Train acc: 0.82894, Validation Loss: 0.64324, Validation acc: 0.776000
+Epoch 186[2.100s]: LR: 0.00005, Loss: 0.40314, Train acc: 0.82669, Validation Loss: 0.64147, Validation acc: 0.776000
+Epoch 187[2.100s]: LR: 0.00004, Loss: 0.40499, Train acc: 0.82862, Validation Loss: 0.64159, Validation acc: 0.766000
+Epoch 188[2.088s]: LR: 0.00004, Loss: 0.40352, Train acc: 0.82669, Validation Loss: 0.64265, Validation acc: 0.766000
+Epoch 189[2.076s]: LR: 0.00004, Loss: 0.40079, Train acc: 0.82830, Validation Loss: 0.64267, Validation acc: 0.774000
+Epoch 190[2.224s]: LR: 0.00004, Loss: 0.40628, Test Loss: 0.51554, Test acc: 0.76000
+Epoch 191[2.124s]: LR: 0.00004, Loss: 0.40390, Train acc: 0.82830, Validation Loss: 0.64271, Validation acc: 0.774000
+Epoch 192[2.075s]: LR: 0.00004, Loss: 0.40393, Train acc: 0.82669, Validation Loss: 0.64343, Validation acc: 0.772000
+Epoch 193[2.103s]: LR: 0.00004, Loss: 0.40718, Train acc: 0.82830, Validation Loss: 0.64267, Validation acc: 0.768000
+Epoch 194[2.114s]: LR: 0.00004, Loss: 0.40605, Train acc: 0.82765, Validation Loss: 0.64257, Validation acc: 0.772000
+Epoch 195[2.123s]: LR: 0.00004, Loss: 0.40252, Train acc: 0.82733, Validation Loss: 0.64378, Validation acc: 0.772000
+Epoch 196[2.078s]: LR: 0.00004, Loss: 0.39665, Train acc: 0.82669, Validation Loss: 0.64619, Validation acc: 0.756000
+Epoch 197[2.079s]: LR: 0.00004, Loss: 0.40356, Train acc: 0.82765, Validation Loss: 0.64204, Validation acc: 0.774000
+Epoch 198[2.081s]: LR: 0.00004, Loss: 0.40125, Train acc: 0.82701, Validation Loss: 0.64386, Validation acc: 0.772000
+Epoch 199[2.079s]: LR: 0.00004, Loss: 0.40414, Train acc: 0.82797, Validation Loss: 0.64276, Validation acc: 0.774000
+Epoch 200[2.256s]: LR: 0.00004, Loss: 0.39788, Test Loss: 0.51592, Test acc: 0.75400
+Epoch 201[2.094s]: LR: 0.00004, Loss: 0.40326, Train acc: 0.82830, Validation Loss: 0.64386, Validation acc: 0.774000
+Epoch 202[2.138s]: LR: 0.00004, Loss: 0.40430, Train acc: 0.82958, Validation Loss: 0.64489, Validation acc: 0.776000
+Epoch 203[2.101s]: LR: 0.00004, Loss: 0.39981, Train acc: 0.82733, Validation Loss: 0.64545, Validation acc: 0.774000
+Epoch 204[2.094s]: LR: 0.00004, Loss: 0.40194, Train acc: 0.82797, Validation Loss: 0.64598, Validation acc: 0.772000
+Epoch 205[2.115s]: LR: 0.00004, Loss: 0.39945, Train acc: 0.82926, Validation Loss: 0.64505, Validation acc: 0.766000
+Epoch 206[2.088s]: LR: 0.00004, Loss: 0.39932, Train acc: 0.83119, Validation Loss: 0.64534, Validation acc: 0.772000
+Epoch 207[2.073s]: LR: 0.00004, Loss: 0.40329, Train acc: 0.82830, Validation Loss: 0.64533, Validation acc: 0.766000
+Epoch 208[2.113s]: LR: 0.00004, Loss: 0.40320, Train acc: 0.82958, Validation Loss: 0.64299, Validation acc: 0.772000
+Epoch 209[2.104s]: LR: 0.00003, Loss: 0.40017, Train acc: 0.82990, Validation Loss: 0.64530, Validation acc: 0.766000
+Epoch 210[2.215s]: LR: 0.00003, Loss: 0.39985, Test Loss: 0.51542, Test acc: 0.75600
+Epoch 211[2.096s]: LR: 0.00003, Loss: 0.40357, Train acc: 0.82926, Validation Loss: 0.64510, Validation acc: 0.768000
+Epoch 212[2.151s]: LR: 0.00003, Loss: 0.40338, Train acc: 0.82926, Validation Loss: 0.64521, Validation acc: 0.772000
+Epoch 213[2.304s]: LR: 0.00003, Loss: 0.40358, Train acc: 0.82765, Validation Loss: 0.64593, Validation acc: 0.774000
+Epoch 214[2.121s]: LR: 0.00003, Loss: 0.40167, Train acc: 0.82958, Validation Loss: 0.64521, Validation acc: 0.772000
+Epoch 215[2.098s]: LR: 0.00003, Loss: 0.40251, Train acc: 0.82926, Validation Loss: 0.64604, Validation acc: 0.774000
+Epoch 216[2.112s]: LR: 0.00003, Loss: 0.40533, Train acc: 0.82765, Validation Loss: 0.64726, Validation acc: 0.762000
+Epoch 217[2.147s]: LR: 0.00003, Loss: 0.40391, Train acc: 0.82862, Validation Loss: 0.64561, Validation acc: 0.776000
+Epoch 218[2.120s]: LR: 0.00003, Loss: 0.39851, Train acc: 0.82733, Validation Loss: 0.64543, Validation acc: 0.772000
+Epoch 219[2.149s]: LR: 0.00003, Loss: 0.40505, Train acc: 0.82958, Validation Loss: 0.64528, Validation acc: 0.774000
+Epoch 220[2.214s]: LR: 0.00002, Loss: 0.40570, Test Loss: 0.51542, Test acc: 0.75600
+Epoch 221[2.118s]: LR: 0.00002, Loss: 0.39846, Train acc: 0.83055, Validation Loss: 0.64820, Validation acc: 0.770000
+Epoch 222[2.104s]: LR: 0.00002, Loss: 0.39851, Train acc: 0.82797, Validation Loss: 0.64715, Validation acc: 0.776000
+Epoch 223[2.103s]: LR: 0.00002, Loss: 0.40266, Train acc: 0.83055, Validation Loss: 0.64802, Validation acc: 0.768000
+Epoch 224[2.105s]: LR: 0.00002, Loss: 0.40638, Train acc: 0.82862, Validation Loss: 0.64815, Validation acc: 0.776000
+Epoch 225[2.108s]: LR: 0.00002, Loss: 0.40163, Train acc: 0.83023, Validation Loss: 0.64682, Validation acc: 0.774000
+Epoch 226[2.092s]: LR: 0.00002, Loss: 0.40240, Train acc: 0.83087, Validation Loss: 0.64676, Validation acc: 0.774000
+Epoch 227[2.478s]: LR: 0.00002, Loss: 0.40471, Train acc: 0.82958, Validation Loss: 0.64792, Validation acc: 0.772000
+Epoch 228[2.444s]: LR: 0.00002, Loss: 0.40027, Train acc: 0.82926, Validation Loss: 0.64624, Validation acc: 0.774000
+Epoch 229[2.367s]: LR: 0.00002, Loss: 0.40137, Train acc: 0.82926, Validation Loss: 0.64793, Validation acc: 0.772000
+Epoch 230[2.513s]: LR: 0.00002, Loss: 0.40166, Test Loss: 0.51599, Test acc: 0.76400
+Epoch 231[2.234s]: LR: 0.00002, Loss: 0.40165, Train acc: 0.82926, Validation Loss: 0.64677, Validation acc: 0.774000
+Epoch 232[2.340s]: LR: 0.00002, Loss: 0.40119, Train acc: 0.82990, Validation Loss: 0.64725, Validation acc: 0.776000
+Epoch 233[2.101s]: LR: 0.00002, Loss: 0.40106, Train acc: 0.82990, Validation Loss: 0.64778, Validation acc: 0.774000
+Epoch 234[2.125s]: LR: 0.00002, Loss: 0.40248, Train acc: 0.83087, Validation Loss: 0.64801, Validation acc: 0.774000
+Epoch 235[3.375s]: LR: 0.00002, Loss: 0.40144, Train acc: 0.83023, Validation Loss: 0.64749, Validation acc: 0.776000
+Epoch 236[2.366s]: LR: 0.00002, Loss: 0.39906, Train acc: 0.83087, Validation Loss: 0.64749, Validation acc: 0.772000
+Epoch 237[2.167s]: LR: 0.00002, Loss: 0.40573, Train acc: 0.83055, Validation Loss: 0.64834, Validation acc: 0.774000
+Epoch 238[2.160s]: LR: 0.00002, Loss: 0.40290, Train acc: 0.83151, Validation Loss: 0.64753, Validation acc: 0.772000
+Epoch 239[2.102s]: LR: 0.00002, Loss: 0.40356, Train acc: 0.83023, Validation Loss: 0.64724, Validation acc: 0.774000
+Epoch 240[2.219s]: LR: 0.00002, Loss: 0.40134, Test Loss: 0.51487, Test acc: 0.75600
+Epoch 241[2.111s]: LR: 0.00002, Loss: 0.39741, Train acc: 0.82990, Validation Loss: 0.64718, Validation acc: 0.768000
+Epoch 242[2.119s]: LR: 0.00001, Loss: 0.39888, Train acc: 0.82958, Validation Loss: 0.64728, Validation acc: 0.772000
+Epoch 243[2.112s]: LR: 0.00001, Loss: 0.39941, Train acc: 0.83023, Validation Loss: 0.64798, Validation acc: 0.776000
+Epoch 244[2.129s]: LR: 0.00001, Loss: 0.40087, Train acc: 0.83023, Validation Loss: 0.64790, Validation acc: 0.772000
+Epoch 245[2.132s]: LR: 0.00001, Loss: 0.40205, Train acc: 0.83119, Validation Loss: 0.64812, Validation acc: 0.774000
+Epoch 246[2.135s]: LR: 0.00001, Loss: 0.39889, Train acc: 0.83087, Validation Loss: 0.64773, Validation acc: 0.774000
+Epoch 247[2.124s]: LR: 0.00001, Loss: 0.40137, Train acc: 0.82958, Validation Loss: 0.64840, Validation acc: 0.778000
+Epoch 248[2.119s]: LR: 0.00001, Loss: 0.39715, Train acc: 0.83087, Validation Loss: 0.64896, Validation acc: 0.774000
+Epoch 249[2.097s]: LR: 0.00001, Loss: 0.39751, Train acc: 0.82958, Validation Loss: 0.64903, Validation acc: 0.776000
+Epoch 250[2.217s]: LR: 0.00001, Loss: 0.40375, Test Loss: 0.51622, Test acc: 0.76400
+Epoch 251[2.145s]: LR: 0.00001, Loss: 0.40273, Train acc: 0.83055, Validation Loss: 0.64904, Validation acc: 0.772000
+Epoch 252[2.239s]: LR: 0.00001, Loss: 0.39785, Train acc: 0.83087, Validation Loss: 0.64913, Validation acc: 0.774000
+Epoch 253[2.579s]: LR: 0.00001, Loss: 0.39925, Train acc: 0.83087, Validation Loss: 0.64967, Validation acc: 0.766000
+Epoch 254[2.040s]: LR: 0.00001, Loss: 0.39661, Train acc: 0.83119, Validation Loss: 0.64911, Validation acc: 0.774000
+Epoch 255[2.044s]: LR: 0.00001, Loss: 0.40372, Train acc: 0.83087, Validation Loss: 0.64975, Validation acc: 0.774000
+Epoch 256[2.330s]: LR: 0.00001, Loss: 0.39699, Train acc: 0.83023, Validation Loss: 0.64914, Validation acc: 0.770000
+Epoch 257[2.790s]: LR: 0.00001, Loss: 0.40213, Train acc: 0.83055, Validation Loss: 0.64855, Validation acc: 0.772000
+Epoch 258[2.147s]: LR: 0.00001, Loss: 0.39898, Train acc: 0.83055, Validation Loss: 0.64877, Validation acc: 0.772000
+Epoch 259[2.187s]: LR: 0.00001, Loss: 0.39689, Train acc: 0.82958, Validation Loss: 0.64836, Validation acc: 0.774000
+Epoch 260[2.241s]: LR: 0.00001, Loss: 0.39902, Test Loss: 0.51648, Test acc: 0.75800
+Epoch 261[2.138s]: LR: 0.00001, Loss: 0.40160, Train acc: 0.83055, Validation Loss: 0.64947, Validation acc: 0.772000
+Epoch 262[2.111s]: LR: 0.00001, Loss: 0.39782, Train acc: 0.83119, Validation Loss: 0.64887, Validation acc: 0.772000
+Epoch 263[2.155s]: LR: 0.00001, Loss: 0.39540, Train acc: 0.83119, Validation Loss: 0.64904, Validation acc: 0.776000
+Epoch 264[2.383s]: LR: 0.00001, Loss: 0.40140, Train acc: 0.83119, Validation Loss: 0.64926, Validation acc: 0.774000
+Epoch 265[2.263s]: LR: 0.00001, Loss: 0.39508, Train acc: 0.83087, Validation Loss: 0.64858, Validation acc: 0.774000
+Epoch 266[2.153s]: LR: 0.00001, Loss: 0.39869, Train acc: 0.83055, Validation Loss: 0.64941, Validation acc: 0.774000
+Epoch 267[2.111s]: LR: 0.00001, Loss: 0.40146, Train acc: 0.83119, Validation Loss: 0.64913, Validation acc: 0.774000
+Epoch 268[2.119s]: LR: 0.00001, Loss: 0.39758, Train acc: 0.83087, Validation Loss: 0.64957, Validation acc: 0.778000
+Epoch 269[2.129s]: LR: 0.00001, Loss: 0.40097, Train acc: 0.83087, Validation Loss: 0.64972, Validation acc: 0.774000
+Epoch 270[2.193s]: LR: 0.00001, Loss: 0.40161, Test Loss: 0.51603, Test acc: 0.76200
+Epoch 271[2.225s]: LR: 0.00001, Loss: 0.40334, Train acc: 0.82958, Validation Loss: 0.64906, Validation acc: 0.778000
+Epoch 272[2.084s]: LR: 0.00001, Loss: 0.39889, Train acc: 0.83119, Validation Loss: 0.64924, Validation acc: 0.774000
+Epoch 273[2.131s]: LR: 0.00001, Loss: 0.40296, Train acc: 0.83119, Validation Loss: 0.64876, Validation acc: 0.772000
+Epoch 274[2.102s]: LR: 0.00001, Loss: 0.39700, Train acc: 0.83151, Validation Loss: 0.64897, Validation acc: 0.772000
+Epoch 275[2.108s]: LR: 0.00001, Loss: 0.40200, Train acc: 0.83119, Validation Loss: 0.64916, Validation acc: 0.774000
+Epoch 276[2.234s]: LR: 0.00001, Loss: 0.40169, Train acc: 0.83055, Validation Loss: 0.64935, Validation acc: 0.776000
+Epoch 277[2.090s]: LR: 0.00001, Loss: 0.39824, Train acc: 0.83119, Validation Loss: 0.64921, Validation acc: 0.774000
+Epoch 278[2.098s]: LR: 0.00001, Loss: 0.39901, Train acc: 0.83119, Validation Loss: 0.64981, Validation acc: 0.772000
+Epoch 279[2.204s]: LR: 0.00001, Loss: 0.39783, Train acc: 0.83119, Validation Loss: 0.64990, Validation acc: 0.772000
+Epoch 280[2.203s]: LR: 0.00001, Loss: 0.40095, Test Loss: 0.51664, Test acc: 0.76800
+Epoch 281[2.090s]: LR: 0.00001, Loss: 0.40011, Train acc: 0.83087, Validation Loss: 0.65029, Validation acc: 0.772000
+Epoch 282[2.091s]: LR: 0.00001, Loss: 0.40205, Train acc: 0.83119, Validation Loss: 0.65000, Validation acc: 0.776000
+Epoch 283[2.113s]: LR: 0.00001, Loss: 0.39927, Train acc: 0.83151, Validation Loss: 0.65012, Validation acc: 0.774000
+Epoch 284[2.126s]: LR: 0.00001, Loss: 0.39747, Train acc: 0.82990, Validation Loss: 0.65077, Validation acc: 0.776000
+Epoch 285[2.187s]: LR: 0.00001, Loss: 0.40310, Train acc: 0.83151, Validation Loss: 0.65099, Validation acc: 0.768000
+Epoch 286[2.299s]: LR: 0.00001, Loss: 0.40213, Train acc: 0.83023, Validation Loss: 0.65050, Validation acc: 0.774000
+Epoch 287[2.159s]: LR: 0.00001, Loss: 0.39770, Train acc: 0.83183, Validation Loss: 0.65071, Validation acc: 0.772000
+Epoch 288[2.195s]: LR: 0.00001, Loss: 0.39886, Train acc: 0.83151, Validation Loss: 0.65102, Validation acc: 0.776000
+Epoch 289[2.573s]: LR: 0.00001, Loss: 0.39597, Train acc: 0.82990, Validation Loss: 0.65037, Validation acc: 0.774000
+Epoch 290[2.755s]: LR: 0.00001, Loss: 0.39816, Test Loss: 0.51558, Test acc: 0.75600
+Epoch 291[2.066s]: LR: 0.00001, Loss: 0.40012, Train acc: 0.83119, Validation Loss: 0.65072, Validation acc: 0.772000
+Epoch 292[2.190s]: LR: 0.00001, Loss: 0.40332, Train acc: 0.83151, Validation Loss: 0.65052, Validation acc: 0.776000
+Epoch 293[5.147s]: LR: 0.00001, Loss: 0.40135, Train acc: 0.83087, Validation Loss: 0.65076, Validation acc: 0.776000
+Epoch 294[6.295s]: LR: 0.00001, Loss: 0.39624, Train acc: 0.83087, Validation Loss: 0.65086, Validation acc: 0.776000
+Epoch 295[2.573s]: LR: 0.00001, Loss: 0.40441, Train acc: 0.83119, Validation Loss: 0.65067, Validation acc: 0.774000
+Epoch 296[2.334s]: LR: 0.00001, Loss: 0.39946, Train acc: 0.83215, Validation Loss: 0.65084, Validation acc: 0.770000
+Epoch 297[2.658s]: LR: 0.00001, Loss: 0.39775, Train acc: 0.83183, Validation Loss: 0.65105, Validation acc: 0.774000
+Epoch 298[3.097s]: LR: 0.00001, Loss: 0.40311, Train acc: 0.83183, Validation Loss: 0.65101, Validation acc: 0.774000
+Epoch 299[2.423s]: LR: 0.00001, Loss: 0.39044, Train acc: 0.83183, Validation Loss: 0.65100, Validation acc: 0.774000
+Epoch 300[2.270s]: LR: 0.00001, Loss: 0.40077, Test Loss: 0.51614, Test acc: 0.76200
+Training log saved to ../param/gnns/logs/NCI1_training_log.csv
