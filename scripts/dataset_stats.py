@@ -29,6 +29,12 @@ PAPER_HP = {
 }
 SIGMA_LENGTH = 10
 DTYPE_BYTES = 4  # float32
+# Empirical scale factor: backward retains per-layer intermediates + instance-norm scratch
+# in addition to the per-layer cat tensor. Calibrated from BA_shapes A100 OOMs at N=517
+# (39 GB) and N=573 (37 GB), where the cat-tensor-only formula gave ~16-21 GB.
+PEAK_SCALE = 2.3
+# Candidate --max_graph_size thresholds to report kept-fraction for.
+SIZE_THRESHOLDS = [100, 200, 300, 400, 500, 600]
 
 
 def split_stats(dataset):
@@ -53,6 +59,18 @@ def peak_cat_gb(bsz, n_max, n_hidden, num_layers):
     return bytes_ / 1024**3
 
 
+def estimated_peak_gb(bsz, n_max, n_hidden, num_layers):
+    """Empirically calibrated peak GPU memory estimate (cat tensor + backward intermediates)."""
+    return PEAK_SCALE * peak_cat_gb(bsz, n_max, n_hidden, num_layers)
+
+
+def kept_fraction(nodes_train, threshold):
+    """Fraction of training graphs with num_nodes <= threshold."""
+    if len(nodes_train) == 0:
+        return 0.0
+    return float((nodes_train <= threshold).sum()) / len(nodes_train)
+
+
 def report(name, root):
     try:
         train, val, test = get_datasets(name, root=root)
@@ -67,7 +85,17 @@ def report(name, root):
 
     n_hidden, num_layers, bsz = PAPER_HP[name]
     n_max_train = int(nodes_tr.max()) if len(nodes_tr) else 0
-    peak = peak_cat_gb(bsz, n_max_train, n_hidden, num_layers)
+    peak_cat = peak_cat_gb(bsz, n_max_train, n_hidden, num_layers)
+    peak_est = estimated_peak_gb(bsz, n_max_train, n_hidden, num_layers)
+
+    keep_lines = "    kept-fraction by --max_graph_size (train split):\n"
+    for thr in SIZE_THRESHOLDS:
+        kf = kept_fraction(nodes_tr, thr)
+        peak_at_thr = estimated_peak_gb(bsz, thr, n_hidden, num_layers)
+        keep_lines += (
+            f"      N<={thr:>4}: {kf*100:5.1f}% of train graphs "
+            f"(peak ≈ {peak_at_thr:.1f} GB, fits A100: {peak_at_thr < 38})\n"
+        )
 
     return (
         f"  {name:<10} train/val/test = {n_tr}/{n_va}/{n_te}\n"
@@ -76,8 +104,9 @@ def report(name, root):
         f"    train-only N: min={nodes_tr.min()} p95={int(np.percentile(nodes_tr, 95))} "
         f"max={n_max_train}\n"
         f"    paper HP: bsz={bsz} n_hidden={n_hidden} num_layers={num_layers} sigma={SIGMA_LENGTH}\n"
-        f"    peak Powerful cat-tensor @ train N_max ≈ {peak:.2f} GB  "
-        f"(fits T4 16GB: {peak < 14}, fits A100 40GB: {peak < 38})"
+        f"    peak @ train N_max: cat={peak_cat:.2f} GB, est total={peak_est:.2f} GB "
+        f"(fits T4 16GB: {peak_est < 14}, fits A100 40GB: {peak_est < 38})\n"
+        + keep_lines.rstrip()
     )
 
 
