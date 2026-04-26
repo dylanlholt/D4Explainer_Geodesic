@@ -20,7 +20,7 @@ def accuracy(pred, target):
     return (pred == target).sum().item() / target.size(0)
 from torch_scatter import scatter_add
 
-from utils import set_seed
+from utils import BestValTracker, make_val_mask_from_train, set_seed
 
 EPS = 1
 
@@ -42,6 +42,9 @@ def parse_args():
     parser.add_argument("--hidden", type=int, default=32, help="hidden size.")
     parser.add_argument("--verbose", type=int, default=10, help="Interval of evaluation.")
     parser.add_argument("--num_unit", type=int, default=6, help="number of Convolution layers(units)")
+    parser.add_argument("--weight_decay", type=float, default=0.0, help="L2 weight decay for Adam.")
+    parser.add_argument("--patience", type=int, default=300, help="Early-stopping patience (epochs without val improvement).")
+    parser.add_argument("--val_frac", type=float, default=0.1, help="Fraction of train_mask to carve out as val (no test_mask touched).")
     parser.add_argument(
         "--random_label", type=bool, default=False, help="train a model under label randomization for sanity check"
     )
@@ -243,10 +246,11 @@ if __name__ == "__main__":
     data.to(device)
     n_input = data.x.size(1)
     n_labels = int(torch.unique(data.y).size(0))
+    make_val_mask_from_train(data, val_frac=args.val_frac, seed=44)
     model = EGNN(n_input, hidden_channels=args.hidden, num_classes=n_labels, num_layers=args.num_unit).to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scheduler = ReduceLROnPlateau(optimizer, mode="min", factor=0.8, patience=10, min_lr=1e-5)
-    min_error = None
+    tracker = BestValTracker(patience=args.patience)
     criterion = nn.CrossEntropyLoss()
 
     log_dir = osp.join(args.model_path, "logs")
@@ -254,7 +258,7 @@ if __name__ == "__main__":
     log_path = osp.join(log_dir, f"{name}_training_log.csv")
     log_file = open(log_path, "w", newline="")
     log_writer = csv.writer(log_file)
-    log_writer.writerow(["epoch", "train_loss", "train_acc", "test_loss", "test_acc"])
+    log_writer.writerow(["epoch", "train_loss", "train_acc", "val_loss", "val_acc", "test_loss", "test_acc"])
 
     def train(epoch):
         t = time.time()
@@ -274,28 +278,42 @@ if __name__ == "__main__":
         )
         return loss_train.item(), acc_train
 
-    def eval():
+    def eval_split(mask, label):
         model.eval()
         output = model(x=data.x, edge_index=data.edge_index)
-        loss_test = criterion(output[data.test_mask], data.y[data.test_mask])
+        loss = criterion(output[mask], data.y[mask])
         y_pred = torch.argmax(output, dim=1)
-        acc_test = accuracy(y_pred[data.test_mask], data.y[data.test_mask])
-        print("Test set results:", "loss= {:.4f}".format(loss_test.item()), "accuracy= {:.4f}".format(acc_test))
-        return loss_test, acc_test, y_pred
+        acc = accuracy(y_pred[mask], data.y[mask])
+        print(f"{label} set results: loss= {loss.item():.4f} accuracy= {acc:.4f}")
+        return loss, acc, y_pred
 
     y_pred = None
+    stopped_early = False
     for epoch in range(1, args.epoch + 1):
         train_loss, train_acc_ep = train(epoch)
+        val_loss_log, val_acc_log = float("nan"), float("nan")
         test_loss_log, test_acc_log = float("nan"), float("nan")
 
         if epoch % args.verbose == 0:
-            loss_test, test_acc_log, y_pred = eval()
-            scheduler.step(loss_test)
+            loss_val, val_acc_log, _ = eval_split(data.val_mask, "Val")
+            loss_test, test_acc_log, y_pred = eval_split(data.test_mask, "Test")
+            scheduler.step(loss_val)
+            val_loss_log = loss_val.item()
             test_loss_log = loss_test.item()
+            tracker.update(epoch, val_acc_log, test_acc_log, model)
+            if tracker.should_stop:
+                print(f"Early stopping at epoch {epoch}; best val_acc={tracker.best_val_acc:.5f} at epoch {tracker.best_epoch}.")
+                stopped_early = True
         log_writer.writerow([epoch, f"{train_loss:.4f}", f"{train_acc_ep:.4f}",
+                              "" if val_loss_log != val_loss_log else f"{val_loss_log:.4f}",
+                              "" if val_acc_log != val_acc_log else f"{val_acc_log:.4f}",
                               "" if test_loss_log != test_loss_log else f"{test_loss_log:.4f}",
                               "" if test_acc_log != test_acc_log else f"{test_acc_log:.4f}"])
+        if stopped_early:
+            break
 
+    tracker.restore(model)
+    print(f"Best val_acc={tracker.best_val_acc:.5f} at epoch {tracker.best_epoch}, test_acc_at_best={tracker.best_test_acc:.5f}")
     save_path = f"{name}_gcn.pt"
 
     if not osp.exists(args.model_path):
@@ -303,6 +321,7 @@ if __name__ == "__main__":
     torch.save(model.cpu(), osp.join(args.model_path, save_path))
     log_file.close()
     print(f"Training log saved to {log_path}")
-    labels = data.y[data.test_mask].cpu().numpy()
-    pred = y_pred[data.test_mask].cpu().numpy()
-    print("y_true counts: {}".format(np.unique(labels, return_counts=True)))
+    if y_pred is not None:
+        labels = data.y[data.test_mask].cpu().numpy()
+        pred = y_pred[data.test_mask].cpu().numpy()
+        print("y_true counts: {}".format(np.unique(labels, return_counts=True)))

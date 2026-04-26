@@ -14,7 +14,7 @@ from torch_geometric.data import DataLoader
 from torch_geometric.nn import BatchNorm, GCNConv, GINEConv, global_mean_pool
 
 from datasets.mutag_dataset import Mutagenicity
-from utils import Gtest, Gtrain, set_seed
+from utils import BestValTracker, Gtest, Gtrain, set_seed
 
 EPS = 1
 
@@ -40,6 +40,8 @@ def parse_args():
     parser.add_argument("--batch_size", type=int, default=128, help="Batch size.")
     parser.add_argument("--verbose", type=int, default=10, help="Interval of evaluation.")
     parser.add_argument("--num_unit", type=int, default=2, help="number of Convolution layers(units)")
+    parser.add_argument("--weight_decay", type=float, default=0.0, help="L2 weight decay for Adam.")
+    parser.add_argument("--patience", type=int, default=50, help="Early-stopping patience (epochs without val improvement).")
     parser.add_argument(
         "--random_label", type=bool, default=False, help="train a model under label randomization for sanity check"
     )
@@ -132,9 +134,9 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     model = Mutag_GCN(args.num_unit).to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scheduler = ReduceLROnPlateau(optimizer, mode="min", factor=0.8, patience=10, min_lr=1e-5)
-    min_error = None
+    tracker = BestValTracker(patience=args.patience)
     log_dir = osp.join(args.model_path, "logs")
     os.makedirs(log_dir, exist_ok=True)
     log_path = osp.join(log_dir, "mutag_training_log.csv")
@@ -152,26 +154,29 @@ if __name__ == "__main__":
         val_error, val_acc = Gtest(val_loader, model, device=device, criterion=nn.CrossEntropyLoss())
         test_error, test_acc = Gtest(test_loader, model, device=device, criterion=nn.CrossEntropyLoss())
         scheduler.step(val_error)
-        if min_error is None or val_error <= min_error:
-            min_error = val_error
+        tracker.update(epoch, val_acc, test_acc, model)
 
         t2 = time.time()
         log_writer.writerow([epoch, f"{lr:.5f}", f"{loss:.5f}", f"{train_acc:.5f}", f"{val_error:.5f}", f"{val_acc:.5f}", f"{test_error:.5f}", f"{test_acc:.5f}"])
 
         if epoch % args.verbose == 0:
-            test_error, test_acc = Gtest(test_loader, model, device=device, criterion=nn.CrossEntropyLoss())
             t3 = time.time()
             print(
                 "Epoch{:4d}[{:.3f}s]: LR: {:.5f}, Loss: {:.5f}, Test Loss: {:.5f}, "
                 "Test acc: {:.5f}".format(epoch, t3 - t1, lr, loss, test_error, test_acc)
             )
-            continue
+        else:
+            print(
+                "Epoch{:4d}[{:.3f}s]: LR: {:.5f}, Loss: {:.5f}, Train acc: {:.5f}, Validation Loss: {:.5f}, "
+                "Validation acc: {:5f}".format(epoch, t2 - t1, lr, loss, train_acc, val_error, val_acc)
+            )
 
-        print(
-            "Epoch{:4d}[{:.3f}s]: LR: {:.5f}, Loss: {:.5f}, Train acc: {:.5f}, Validation Loss: {:.5f}, "
-            "Validation acc: {:5f}".format(epoch, t2 - t1, lr, loss, train_acc, val_error, val_acc)
-        )
+        if tracker.should_stop:
+            print(f"Early stopping at epoch {epoch}; best val_acc={tracker.best_val_acc:.5f} at epoch {tracker.best_epoch}.")
+            break
 
+    tracker.restore(model)
+    print(f"Best val_acc={tracker.best_val_acc:.5f} at epoch {tracker.best_epoch}, test_acc_at_best={tracker.best_test_acc:.5f}")
     save_path = "mutag_gcn.pt"
     if not osp.exists(args.model_path):
         os.makedirs(args.model_path)
