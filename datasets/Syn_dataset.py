@@ -122,7 +122,6 @@ class SynGraphDataset(InMemoryDataset):
                 mapping=mapping_mask,
                 idx=id,
             )
-            print(data)
             if self.pre_filter is not None and not self.pre_filter(data):
                 continue
             if self.pre_transform is not None:
