@@ -50,7 +50,7 @@ def parse_args():
     parser.add_argument("--gradient_checkpointing", action="store_true", default=False, help="Enable gradient checkpointing in Powerful to trade compute for memory.")
     parser.add_argument("--debug_shapes", action="store_true", default=False, help="Print padded N, real node counts, and CUDA memory for first 5 batches of each epoch.")
     parser.add_argument("--size_bucketed", action="store_true", default=False, help="Use a node-count-bucketed batch sampler so each batch pads to a tight N (reduces peak memory on size-heterogeneous datasets like Mutagenicity).")
-    parser.add_argument("--max_graph_size", type=int, default=None, help="Drop training graphs with num_nodes > max_graph_size before training (outlier cap; typically used with Mutagenicity to exclude a handful of 200+ node graphs).")
+    parser.add_argument("--max_graph_size", type=int, default=None, help="Drop graphs with num_nodes > max_graph_size from ALL splits (train/val/test) before training. Hardware-driven data cap applied uniformly so train and eval distributions match. Documented as a data deviation; loss/optimizer unchanged.")
     parser.add_argument("--natural_gradient", action="store_true", default=False, help="[Extension] Apply diagonal Fisher-Rao natural-gradient rescaling to score tensors. Off = paper baseline.")
     parser.add_argument("--nat_grad_eps", type=float, default=1e-6, help="[Extension] Boundary clamp for θ in natural-gradient hook to prevent vanishing/exploding gradient at θ∈{0,1}.")
     parser.add_argument("--run_name", type=str, default=None, help="Optional subfolder under results/{dataset}/ for this run's artifacts (best_model.pth, config.json, metrics.jsonl). Use to keep baseline and extension runs separate.")
@@ -68,10 +68,16 @@ train_dataset, val_dataset, test_dataset = get_datasets(name=args.dataset)
 
 train_dataset = train_dataset[: args.data_size]
 if args.max_graph_size is not None:
-    keep = filter_by_max_size(train_dataset, args.max_graph_size)
-    kept, total = len(keep), len(train_dataset)
-    print(f"[max_graph_size={args.max_graph_size}] keeping {kept}/{total} training graphs")
-    train_dataset = train_dataset[keep]
+    for split_name, split in (("train", train_dataset), ("val", val_dataset), ("test", test_dataset)):
+        keep = filter_by_max_size(split, args.max_graph_size)
+        kept, total = len(keep), len(split)
+        print(f"[max_graph_size={args.max_graph_size}] {split_name}: keeping {kept}/{total} graphs")
+        if split_name == "train":
+            train_dataset = train_dataset[keep]
+        elif split_name == "val":
+            val_dataset = val_dataset[keep]
+        else:
+            test_dataset = test_dataset[keep]
 gnn_path = f"param/gnns/{args.dataset}_{args.gnn_type}.pt"
 explainer = DiffExplainer(args.device, gnn_path)
 
