@@ -419,9 +419,11 @@ class DiffExplainer(Explainer):
             mean_train_acc = 1- np.mean(train_acc)
             mean_train_fidelity = np.mean(train_fid)
             mean_train_sparsity = np.mean(train_sparsity)
+            epoch_elapsed = time.time() - epoch_start_time
             print(
                 (
                     f"Training Epoch: {epoch} | "
+                    f"elapsed: {epoch_elapsed:.1f}s | "
                     f"training loss: {mean_train_loss} | "
                     f"training fidelity drop: {mean_train_fidelity} | "
                     f"training cf acc: {mean_train_acc} | "
@@ -554,7 +556,7 @@ class DiffExplainer(Explainer):
         :return: the explanation (edge_mask, original prediction, explanation prediction, modification rate)
         """
         model = Powerful(args).to(args.device)
-        exp_dir = f"{args.root}/{args.dataset}/"
+        exp_dir = get_exp_dir(args)
         model.load_state_dict(torch.load(os.path.join(exp_dir, "best_model.pth"), weights_only=False)["model"])
         model.eval()
         graph.to(args.device)
@@ -619,7 +621,7 @@ class DiffExplainer(Explainer):
         node_feature = node_feature.unsqueeze(0)  # batchsize=1
         mask = torch.ones_like(random_adj).to(args.device)
         model = Powerful(args).to(args.device)
-        exp_dir = f"{args.root}/{args.dataset}/"
+        exp_dir = get_exp_dir(args)
         model.load_state_dict(torch.load(os.path.join(exp_dir, "best_model.pth"), weights_only=False)["model"])
         model.eval()
         score = model(A=random_adj, node_features=node_feature, mask=mask, noiselevel=sigma).to(args.device)
