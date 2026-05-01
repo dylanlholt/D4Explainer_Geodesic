@@ -1,0 +1,688 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{todonotes}  % \todo{} and \missingfigure{} for tracking gaps
+
+\geometry{margin=1in}
+
+% --- Custom commands ---
+\newcommand{\MG}{\mathcal{M}_G}
+\newcommand{\EG}{\mathcal{E}_G}
+\newcommand{\Itheta}{\mathcal{I}(\theta)}
+\newcommand{\Lcf}{\mathcal{L}_{\text{cf}}}
+\newcommand{\Ldist}{\mathcal{L}_{\text{dist}}}
+\newcommand{\natgrad}{\widetilde{\nabla}}
+\newcommand{\phil}{\phi_{ij}}
+\newcommand{\thetaij}{\theta_{ij}}
+
+% --- Theorem environments ---
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}{Remark}
+\newtheorem{definition}{Definition}
+
+% ================================================================
+\title{Geodesic Attribution on the Graph Explanation Manifold:\\
+  Navigating D4Explainer's Counterfactual Explanation Space\\
+  via Fisher-Rao Geodesic Flow}
+\author{Dylan L Holt\\
+  \small Department of Applied and Computational Mathematics\\
+  \small Johns Hopkins University\\
+  \small \texttt{dholt14@jh.edu}}
+\date{}
+% ================================================================
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+% TODO: Fill in after results are complete.
+% Draft seed:
+We extend D4Explainer's discrete denoising diffusion framework for GNN
+explainability by recasting its reverse diffusion process as geodesic
+flow on the statistical manifold of graph distributions under the
+Fisher-Rao metric. Where D4Explainer uses a Euclidean training objective
+that ignores the curvature of the explanation manifold $\MG$, we propose
+replacing it with natural gradient descent, enforcing that each
+denoising step follows the geometry of the graph distribution space,
+and yielding a canonically ordered, per-edge attribution decomposition
+via martingale increments along the geodesic. We evaluate on the
+D4Explainer benchmark suite (BA-Shapes, BA-Community, Tree-Cycles,
+Tree-Grid) and report [results placeholder].
+\todo[inline]{Add Results once ready.}
+\end{abstract}
+\setcounter{section}{0}
+% ================================================================
+\section{Introduction}\label{sec:paper}
+% ================================================================
+
+% --- Motivation ---
+Graph Neural Networks (GNNs) have achieved strong performance across
+node classification, graph classification, and link prediction tasks,
+yet their lack of intrinsic interpretability limits deployment in
+high-stakes settings \todo[inline]{Build upon GNN survey}.
+Counterfactual explanations offer a principled alternative: given a
+prediction $f(G)$, find a minimally edited graph $G'$ such that
+$f(G') \neq f(G)$.
+
+% --- Prior work gap ---
+Early counterfactual methods such as CF-GNNExplainer
+\todo[inline]{Recall CF-GNNExplainer} optimize edge masks in Euclidean space,
+producing explanations that may lie off the data manifold. In other words, these explanations were not in the feasible range of the sample space, which was
+a critical failure mode identified by \citet{doshi2017towards}.
+D4Explainer \citep{chen2023d4explainer} addresses this by enforcing
+the in-distribution constraint via discrete denoising diffusion,
+representing a significant advance.
+
+% --- The gap this paper fills ---
+However, D4Explainer's denoising objective remains Euclidean: that is, the
+optimizer treats the parameter space of edge probabilities as flat,
+ignoring the curvature of the statistical manifold it implicitly
+constructs. This motivates the central question of this work:
+\emph{what is the geometrically correct way to navigate D4Explainer's
+explanation space?}
+
+% --- Contributions ---
+We make three contributions:
+\begin{enumerate}
+  \item \textbf{Geometric reframing.} We show that D4Explainer's
+    explanation space is a statistical manifold $\MG$ parameterized by
+    Bernoulli edge probabilities, and that the natural metric on $\MG$
+    is the Fisher-Rao metric $g_{ij}(\theta) =
+    \delta_{ij}/(\thetaij(1-\thetaij))$.
+
+  \item \textbf{Algorithmic replacement.} We replace D4Explainer's
+    Euclidean gradient update with natural gradient descent, enforcing
+    that each denoising step follows the geodesic on $(\MG,
+    g_{\text{FR}})$.
+
+  \item \textbf{Interpretive decomposition.} We derive per-edge
+    attribution scores $\phil$ as martingale increments along the
+    geodesic path, satisfying a completeness property analogous to
+    Shapley efficiency: $\sum_{(i,j)} \phil =
+    f(e^*_{\text{geo}}) - f(G)$.
+\end{enumerate}
+
+% ================================================================
+\section{Background}
+% ================================================================
+
+\subsection{GNN Explainability}
+
+\todo[inline]{Fill in Key Definitions for navigating paper: taxonomy of gradient-based, perturbation-based,
+and counterfactual methods. Key papers: GNNExplainer, CF-GNNExplainer,
+GraphSVX, Doshi-Velez \& Kim (2017), particular emphasis on the in-distribution
+requirement as the motivating criterion.}
+
+\subsection{Diffusion Models on Graphs}
+
+Let $G = (V, E)$ be a graph with adjacency matrix
+$A^{(0)} \in \{0,1\}^{n \times n}$.
+The forward diffusion process corrupts $A^{(0)}$ over $T$ steps by
+injecting noise, producing a sequence
+$A^{(0)}, A^{(1)}, \ldots, A^{(T)}$
+governed by the It\^{o} stochastic differential equation
+\citep{oksendal2010}:
+\begin{equation}
+  dX_t = b(X_t)\,dt + \sigma(X_t)\,dW_t.
+\end{equation}
+The score-based reverse-time SDE \citep{song2021score} recovers the
+data distribution by running:
+\begin{equation}
+  dX_t = \bigl[b(X_t) - \sigma^2 \nabla_x \log p_t(X_t)\bigr]\,dt
+         + \sigma\,d\bar{W}_t,
+\end{equation}
+where $\nabla_x \log p_t$ is the score function --- the Fisher score
+of $p_t$. This connection between reverse diffusion and the Fisher
+score is the bridge to information geometry utilized in the proposed extension of D4Explainer.
+
+\todo[inline]{Add: GDSS (Jo et al.\ 2022) as continuous-time graph
+diffusion parent of D4Explainer. Connect to D4Explainer's discrete
+adaptation and its loss $\mathcal{L} = \Ldist + \alpha \Lcf$ shown below.}
+$$\\$$
+The D4Explainer (Chen et al., 2023) utilizes the composite loss as follows:
+\[
+  \mathcal{L}(e_k) \;=\; \mathcal{L}_{\mathrm{dist}}(e_k) + \mathcal{L}_{\mathrm{cf}}(e_k),
+\]
+where $\mathcal{L}_{\mathrm{dist}}$ penalises deviation from $\mathcal{p}_{data}$ (measured by
+Maximum Mean Discrepancy) and $\mathcal{L}_{\mathrm{cf}}$ penalises failure to flip the prediction. Maximum Mean Discrepancy (MMD) measures how much $e_k$ looks like a real graph from the training distribution (i.e., is $e_k$ a plausible in-distribution graph). D4Explainer trains $f_\theta$ with the Euclidean gradient $\nabla_\theta \mathcal{L}$,
+treating the parameter space as flat and ignoring the curvature of $\MG$.
+
+\subsection{Information Geometry}
+
+\todo[inline]{Fill in Key Definitions: statistical manifold, Fisher-Rao metric,
+natural gradient. Key papers: Amari (2016). State the key result:
+natural gradient = Riemannian gradient on $(\mathcal{M}, g_\text{FR})$.
+Also cite Ly et al.\ (2017) for Fisher information as operational metric.}
+
+% ================================================================
+\section{The Graph Explanation Manifold $\MG$}
+% ================================================================
+
+\begin{definition}[Graph Explanation Manifold]
+Let $G = (V,E)$ be a graph. The \emph{graph explanation manifold}
+$\MG$ is the statistical manifold parameterized by
+$\theta \in (0,1)^{|E|}$, where each $\thetaij$ denotes the
+probability that edge $(i,j)$ is present in a candidate explanation
+$G'$. Each $\theta$ defines a distribution over graphs via independent
+Bernoullis:
+\begin{equation}
+  p_\theta(A) = \prod_{(i,j) \in E}
+    \thetaij^{A_{ij}}(1 - \thetaij)^{1 - A_{ij}}.
+\end{equation}
+\end{definition}
+
+\begin{lemma}[Diagonal Fisher-Rao Metric on $\MG$]
+Under the Bernoulli product parameterization, the Fisher-Rao metric
+on $\MG$ is diagonal:
+\begin{equation}
+  g_{ij}(\theta) = \frac{1}{\thetaij(1 - \thetaij)}.
+\end{equation}
+\end{lemma}
+\begin{proof}
+  \todo[inline]{Move final proof to appendix - Direct computation from definition of Fisher information for
+  Bernoulli family. From Ly et al.\ (2017), Section 2.}
+\end{proof}
+
+\begin{remark}
+  The diagonal structure makes $\mathcal{I}(\theta)^{-1}$ computable
+  in $O(|E|)$ rather than $O(|E|^2)$, which is the key computational
+  advantage of the Bernoulli factorization.
+\end{remark}
+
+\paragraph{Independence assumption.}
+The Bernoulli product parameterization treats edge probabilities as
+independent. This is a modeling assumption shared with GDSS
+\citep{jo2022score} and D4Explainer \citep{chen2023d4explainer}.
+\todo[inline]{Cite GDSS and D4Explainer as
+precedent since we are building under the same assumptions; flag relaxation to correlated edge model as future work.}
+
+% ================================================================
+\section{Geodesic Denoising via Natural Gradient}
+% ================================================================
+
+\subsection{D4Explainer Baseline (Algorithm~\ref{alg:d4})}
+
+D4Explainer trains $f_\theta$ with the Euclidean gradient $\nabla_\theta \mathcal{L}$,
+treating the parameter space as flat and ignoring the curvature of $\MG$.
+This is the gap addressed in the proposed Algorithm 2, which implements a natural gradient on the explanation space versus the Euclidean gradient.
+
+\begin{algorithm}[H]
+\caption{D4Explainer Reverse Diffusion (Baseline)}
+\label{alg:d4}
+\begin{algorithmic}[1]
+\Require $A^{(T)}$, denoiser $f_\theta$, classifier $f$, steps $T$, candidates $K$
+\Ensure Best explanation $e^*$, candidate set $\{e_k\}$
+
+\For{$k = 1$ \textbf{to} $K$}                     \Comment{Reverse diffusion}
+  \State $A_k^{(T)} \leftarrow A^{(T)}$
+  \For{$t = T$ \textbf{downto} $1$}
+    \State $\widehat{A}_k^{(0)} \leftarrow f_\theta\!\left(A_k^{(t)}, t\right)$
+    \Comment{Posterior mean: $\widehat{A}_k^{(0)} \approx
+             \mathbb{E}\!\left[A^{(0)} \mid A^{(t)}\right]$}
+    \State $A_k^{(t-1)} \sim p_\theta\!\left(A^{(t-1)} \mid
+           A_k^{(t)},\, \widehat{A}_k^{(0)}\right)$
+    \Comment{Sampling next step given current state and pred. clean graph}
+    \State $A^{(t)}_t \leftarrow A_k^{(t-1)}$
+    \Comment{Explicitly storing next step as input to next iteration}
+  \EndFor
+  \State $e_k \leftarrow \widehat{A}_k^{(0)}$
+  \Comment{Store final predicted clean graph after $T$ steps as candidate explanation}
+\EndFor
+
+\For{$k = 1$ \textbf{to} $K$}                        \Comment{Evaluate loss}
+  \State $\mathcal{L}_{\mathrm{dist}}(e_k)
+         \leftarrow \mathrm{MMD}\!\left(e_k,\, \mathcal{p}_{data}\right)$
+    \Comment{Measure deviation from in-distribution graphs}
+  \State $\mathcal{L}_{\mathrm{cf}}(e_k)
+         \leftarrow \mathrm{CrossEntropy}\!\left(f(e_k),\, 1 - \hat{Y}_G\right)$
+    \Comment{Penalize if candidate does not flip prediction}
+  \State $\mathcal{L}(e_k) \leftarrow
+         \mathcal{L}_{\mathrm{dist}}(e_k) + \mathcal{L}_{\mathrm{cf}}(e_k)$
+    \Comment{Sum for total loss of candidate explanation}
+\EndFor
+
+\State $e^* \leftarrow \operatorname*{arg\,min}_{e_k}\; \mathcal{L}(e_k)$
+\Comment{Select candidate explanation with minimal total loss}
+\State \Return $e^*,\; \{e_k\}_{k=1}^K$
+\end{algorithmic}
+\end{algorithm}
+
+\todo[inline]{\textbf{Draw more from Key References:}
+\newline\newline
+Chen, J., Wu, S., Gupta, A., & Ying, R. (2023). D4Explainer: In-distribution GNN explanations via discrete denoising diffusion. Advances in Neural Information Processing Systems (NeurIPS 2023). arXiv:2310.19321.
+\newline\newline
+Jo, J., Lee, S., & Hwang, S. J. (2022). Score-based generative modeling of graphs via the system of stochastic differential equations. International Conference on Machine Learning, pp. 10362–10383. PMLR.}
+
+\subsection{Proposed: Geodesic Denoising via Natural Gradient (Algorithm~\ref{alg:geo})}
+
+\begin{lemma}[Natural Gradient as Riemannian Gradient]
+The natural gradient update
+$\theta \leftarrow \theta - \eta\,\Itheta^{-1}\nabla_\theta\mathcal{L}$
+is the Riemannian gradient descent step on $(\MG, g_\text{FR})$.
+\end{lemma}
+\begin{proof}
+  \todo[inline]{Move final proof to appendix - Recall Amari (2016), Chapter 3. The Riemannian gradient is
+  $\text{grad}\,\mathcal{L} = G(\theta)^{-1}\nabla\mathcal{L}$ where
+  $G(\theta)$ is the metric tensor. For Fisher-Rao, $G = \Itheta$.}
+\end{proof}
+
+D4Explainer's reverse diffusion optimizes a Euclidean gradient
+$\nabla_\theta \mathcal{L}$, treating the parameter space as flat and
+ignoring the curvature of the graph distribution manifold $\mathcal{M}_G$.
+We replace this with a \emph{natural gradient} update that follows the
+geodesic on $(\mathcal{M}_G, g_{\mathrm{FR}})$, enforcing that each
+denoising step respects the local geometry of the edge-probability
+distributions rather than moving uniformly in adjacency matrix space.
+\newline\newline
+For the product Bernoulli edge model (from Algorithm 1), the Fisher information matrix is
+diagonal with entries
+$$
+    \mathcal{I}(\theta)_{(i,j),(i,j)}
+    \;=\;
+    \frac{1}{\theta_{ij}\,(1 - \theta_{ij})},
+$$
+which diverges as $\theta_{ij} \to \{0, 1\}$ (high curvature near
+deterministic edges) and attains its minimum of $4$ at
+$\theta_{ij} = 0.5$ (flat region, maximally uncertain edges).
+Inverting this metric yields the natural gradient
+$$
+    \widetilde{\nabla}_\theta \mathcal{L}[ij]
+    \;=\;
+    \theta_{ij}(1 - \theta_{ij})\cdot \nabla_\theta \mathcal{L}[ij],
+$$
+where the scaling factor $\theta_{ij}(1 - \theta_{ij})$ is a concave
+function of $\theta_{ij}$, maximized at $0.5$ and vanishing at the
+boundaries. The geodesic update is then
+$$
+    \theta^{(t-1)}
+    \;=\;
+    \theta^{(t)}
+    \;-\;
+    a_t\,\mathcal{I}(\theta^{(t)})^{-1}\,\nabla_\theta \mathcal{L},
+$$
+where $\{a_t\}= \frac{1}{t}$ such that early steps are large but become smaller at each iteration.
+The elementwise form makes the geometric content transparent: edges with
+$\theta_{ij} \approx 0.5$ (uncertain) receive large updates and resolve
+quickly, while edges near $0$ or $1$ (decided) are protected from large
+perturbations. This means that noisy edges are resolved more quickly while preserving edges with higher certainty. The method follows these natural gradients from step to step, which is our proposed extension.
+
+\begin{algorithm}[H]
+\caption{Geodesic Denoising via Fisher-Rao Natural Gradient (Proposed)}
+\begin{algorithmic}[1]
+\Require $A^{(T)}$, classifier $f$, steps $T$,
+         Fisher oracle $\mathcal{I}(\cdot)$, step sizes $\{a_t\}$, threshold $\tau$
+\Ensure Geodesic path $\{\theta^{(t)}\}_{t=0}^T$, explanation $e^*_{\mathrm{geo}}$
+
+\State $\theta^{(T)}[ij] \leftarrow A^{(T)}[ij]$
+\Comment{Initialise at noisy graph; $\theta \in \{0,1\}^{|E|}$}
+
+\For{$t = T$ \textbf{downto} $1$}
+
+  \State $\nabla\mathcal{L} \leftarrow
+         \nabla_\theta\!\left[\mathcal{L}_{\mathrm{dist}}\!\left(\theta^{(t)}\right)
+         + \mathcal{L}_{\mathrm{cf}}\!\left(\theta^{(t)}, f\right)\right]$
+  \Comment{Euclidean gradient of composite loss (same as D4Explainer)}
+
+  \State $\mathcal{I}_t \leftarrow
+         \mathcal{I}\!\left(\theta^{(t)}\right)$
+  \Comment{Fisher information at current manifold point}
+
+  \State $\natgrad\mathcal{L} \leftarrow \mathcal{I}_t^{-1}\,\nabla\mathcal{L}$
+  \Comment{Natural gradient adj. from Euclidean gradient: steepest descent on $(\MG, g_{\mathrm{FR}})$}
+
+  \State $\theta^{(t-1)} \leftarrow \theta^{(t)} - a_t\,\natgrad\mathcal{L}$
+  \Comment{Geodesic step along $\MG$ with step-size $a_t=\frac{1}{t}$}
+
+  \State $\theta^{(t-1)}[ij] \leftarrow
+         \mathrm{Clip}\!\left(\theta^{(t-1)}[ij],\,\varepsilon,\,1-\varepsilon\right)$
+  \Comment{Avoid boundary degeneracy where $\mathcal{I}$ diverges}
+
+  \State Store $\left(\theta^{(t-1)},\, \mathcal{I}_t,\,
+         \natgrad\mathcal{L}\right)$ in $\mathrm{geodesic\_path}$
+
+\EndFor
+
+\State $e^*_{\mathrm{geo}}[ij]
+    \;=\;
+    \mathbf{1}\!\left[\,\theta^{(0)}_{ij} > \tau\,\right]$
+\Comment{Adjacency matrix computed from edge probabilities against threshold $\tau$}
+
+\State \Return $e^*_{\mathrm{geo}},\; \mathrm{geodesic\_path}$
+\end{algorithmic}
+\end{algorithm}
+
+\todo[inline]{\textbf{Draw more from Key References:}
+\newline\newline
+Amari, S. (2016). Information geometry and its applications. Springer.
+\newline\newline
+Coifman, R. R., & Lafon, S. (2006). Diffusion maps. Applied and Computational Harmonic Analysis, 21(1), 5–30.
+\newline\newline
+Song, Y., Sohl-Dickstein, J., Kingma, D. P., Kumar, A., Ermon, S., & Poole, B. (2021). Score-based generative modeling through stochastic differential equations. ICLR 2021. arXiv:2011.13456.}
+
+\paragraph{Implementation note.}
+The natural gradient is applied as a backward hook on
+\texttt{score\_batch} before \texttt{optimizer.step()}, leaving
+the loss functions \texttt{loss\_dist} and \texttt{loss\_cf} unchanged:
+\begin{verbatim}
+score_batch = model(A=..., node_features=..., mask=..., noiselevel=sigma)
+register_natural_gradient_hook(score_batch)   # hook fires in backward()
+...
+loss = loss_dist + args.alpha_cf * loss_cf
+loss.backward()      # natural gradient rescaling applied here
+optimizer.step()     # steps in corrected direction
+\end{verbatim}
+
+\todo[inline]{Add Github Repository reference}
+
+% ================================================================
+\section{Attribution Decomposition via Martingale Increments}
+% ================================================================
+
+The geodesic path $\{\theta^{(t)}\}_{t=T}^{0}$ induces a martingale
+along the GNN prediction:
+\begin{equation}
+  M_t = \mathbb{E}\bigl[f(e^*_{\text{geo}}) \mid \theta^{(t)}\bigr],
+  \quad M_T = f(G), \quad M_0 = f(e^*_{\text{geo}}).
+\end{equation}
+Per-edge attribution scores are defined as:
+\begin{equation}
+  \phil = \sum_{t=0}^{T-1} \Delta M_t \cdot
+    \frac{|\theta^{(t+1)}_{ij} - \theta^{(t)}_{ij}|}
+         {\sum_{(a,b)}|\theta^{(t+1)}_{ab} - \theta^{(t)}_{ab}|}.
+\end{equation}
+
+\begin{algorithm}[H]
+\caption{Attribution Decomposition via Geodesic Martingale Increments}
+\label{alg:attr}
+\begin{algorithmic}[1]
+\Require Geodesic path $\{\theta^{(t)}\}$, classifier $f$,
+         input $G$, explanation $e^*_{\text{geo}}$
+\Ensure Attribution scores $\{\phil\}$, ranked edge list
+\For{$t = 0$ \textbf{to} $T$}
+  \State $M_t \leftarrow f(\theta^{(t)})$
+\EndFor
+\For{each edge $(i,j) \in E$}
+  \State $\phil \leftarrow 0$
+  \For{$t = 0$ \textbf{to} $T-1$}
+    \State $\Delta M_t \leftarrow M_{t+1} - M_t$
+    \State $w_{ij}^{(t)} \leftarrow
+      \dfrac{|\theta^{(t+1)}_{ij} - \theta^{(t)}_{ij}|}
+            {\sum_{(a,b)}|\theta^{(t+1)}_{ab} - \theta^{(t)}_{ab}|}$
+    \State $\phil \leftarrow \phil + \Delta M_t \cdot w_{ij}^{(t)}$
+  \EndFor
+\EndFor
+\State \textbf{Assert}\;
+  $\textstyle\sum_{(i,j)}\phil \approx f(e^*_{\text{geo}}) - f(G)$
+  \Comment{Completeness}
+\State \Return $\{\phil\}$,\;
+  $\text{ranked} \leftarrow \text{SortDesc}(\{\phil\})$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{proposition}[Completeness]
+The attribution scores satisfy:
+\begin{equation}
+  \sum_{(i,j) \in E} \phil = f(e^*_{\text{geo}}) - f(G).
+\end{equation}
+\end{proposition}
+\begin{proof}
+  \todo[inline]{Move final proof to appendix - Show completeness follows from telescoping the martingale increments and the normalization of edge weights $w_{ij}^{(t)}$. Note: this holds exactly in continuous time; in the discrete approximation, state the error bound or frame as approximate.}
+\end{proof}
+
+\todo[inline]{Address Shapley analogy to cement comparison in familiar explainability framework: completeness is in
+the spirit of Shapley efficiency but is not a formal equivalence.
+Compare to GraphSVX (Duval \& Malliaros, 2021)}
+
+% ================================================================
+\section{Experiments}
+% ================================================================
+
+\subsection{Setup}
+
+\paragraph{Datasets.}
+Following \citet{chen2023d4explainer}, we evaluate on the four benchmark datasets for Node Classification (BA-Shapes, Tree-Cycles, Tree-Grid, and Cornell's webpage graph) and four benchmark datasets for Graph Classification (BA-3Motif, Mutag, BBBP, and NCI1). 
+\todo[inline]{Pull from Chen et al. 2023 - Add dataset statistics table: nodes, edges, classes, train/test split, and GNN classifier for each problem; Put details on training parameters in appendix.}
+\todo[inline]{If computation becomes a challenge, focus on Graph Classification as true scope}
+
+\paragraph{Baselines.}
+\begin{itemize}
+  \item \textbf{D4Explainer} \citep{chen2023d4explainer}:
+    primary baseline; same initialization, same GNN backbone (GCN).
+  \item \textbf{GNNExplainer}: gradient-based mask (Add reference).
+  \item \textbf{CF-GNNExplainer}: Euclidean counterfactual (Add reference).
+\end{itemize}
+
+\paragraph{Metrics (following \citet{chen2023d4explainer}).}
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Metric & Definition & Target \\
+\midrule
+CF-ACC    & Fraction of explanations flipping prediction & Higher \\
+Proximity & Avg.\ edit distance $d(G, G')$ & Lower \\
+Validity  & In-distribution score (discriminator) & Higher \\
+Sparsity  & Fraction of edges retained in $G'$ & Lower \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\todo[inline]{Add formal computations for each metric here, following pattern from Chen et al. (2023) paper}
+
+\paragraph{Geometric validation (additional).}
+\todo[inline]{Add one experiment measuring discriminator/FID score
+along the denoising path for D4Explainer vs.\ geodesic approach.
+This is the key experiment that validates the geometric claim
+directly, not just the downstream metrics.}
+
+\subsection{Hyperparameter Study}
+
+\todo[inline]{Report: $\tau$ (threshold) vs.\ CF-ACC/Sparsity
+Pareto frontier; step size $\eta$; ablation over $T$ (diffusion
+steps).}
+
+\subsection{In-Distribution Evaluation}
+
+\todo[inline]{Following Chen et al. (2023) paper, add MMD results for same (3) select real world datasets; Consider work from Theory of Stats II project; Report and compare to D4Explainer as additional metric}
+
+% \subsection{Ablation}
+
+% \todo[inline]{Two key ablations:
+% (1) Natural gradient vs.\ standard gradient (isolate geometric
+%     contribution).
+% (2) With vs.\ without attribution decomposition (verify completeness
+%     property empirically).}
+
+\subsection{Results}
+
+\todo[inline]{Insert results table here following D4Explainer format.
+Placeholder:}
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Method & CF-ACC $\uparrow$ & Proximity $\downarrow$
+       & Validity $\uparrow$ & Sparsity $\downarrow$ \\
+\midrule
+GNNExplainer      & --- & --- & --- & --- \\
+CF-GNNExplainer   & --- & --- & --- & --- \\
+D4Explainer       & --- & --- & --- & --- \\
+\textbf{Ours}     & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% \missingfigure{Geodesic path visualization on BA-Shapes: edge
+% probability trajectories $\theta^{(t)}$ vs.\ D4Explainer path,
+% overlaid on manifold schematic.}
+
+% ================================================================
+\section{Discussion}
+% ================================================================
+
+\subsection{Connection to Prior Work}
+
+\todo[inline]{Compare to: GraphSVX (Shapley-based, sampling
+approximation); GNNExplainer (gradient masking, no distributional
+constraint); D4Explainer (our direct baseline). Note that our
+completeness property holds by construction vs.\ approximation in
+GraphSVX.}
+
+\todo[inline]{Note connection to Coifman \& Lafon (2006): diffusion
+maps provide an independent spectral characterization of $\MG$ via
+the eigenfunctions of the graph Laplacian. This is a natural future
+extension (see Section~\ref{sec:future}).}
+
+\subsection{Stochastic Approximation Interpretation}
+
+D4Explainer's training loop instantiates stochastic approximation
+in the Robbins-Monro sense. The denoising model is trained by
+minimizing $\mathcal{L} = \Ldist + \alpha\Lcf$; because the forward
+diffusion injects randomness at each timestep, every gradient
+estimate is computed on a stochastically corrupted input, making the
+training update a genuine SA recursion:
+\begin{equation}
+  \theta_{n+1} = \theta_n - a_n\,\hat{g}(\theta_n, \xi_n),
+\end{equation}
+where $\xi_n$ encodes both mini-batch randomness and diffusion noise.
+\todo[inline]{Recall Robbins \& Monro (1951). Note: this framing is not used
+in the D4Explainer paper itself but is a perspective for the proposed approach.}
+
+\subsection{Limitations}
+
+\begin{itemize}
+  \item \textbf{Bernoulli independence.} Edges in real graphs are
+    not independent; the diagonal FIM is an approximation.
+  \item \textbf{Martingale discretization.} The martingale structure
+    holds exactly in continuous time; the discrete approximation
+    introduces error that should be bounded in future work.
+  \item \textbf{Scalability.} The diagonal FIM is $O(|E|)$; extension
+    to correlated edge models would require $O(|E|^2)$ computation
+    or structured approximation.
+\end{itemize}
+
+% ================================================================
+\section{Conclusion}
+% ================================================================
+
+\todo[inline]{Write after results. Restate three contributions;
+position as opening of a research program in geometrically principled
+GNN interpretability.}
+
+% ================================================================
+\section{Future Work and Open Questions}
+\label{sec:future}
+% ================================================================
+\todo[inline]{Tracking several notes for this section based on Optimal Stopping and other course modules.}
+% The following questions were identified during this work but not
+% addressed within its scope. They are recorded here as a research
+% agenda.
+
+% \paragraph{Label-preserving forward diffusion.}
+% D4Explainer does not guarantee that $f(A^{(T)}) = f(A^{(0)})$
+% during forward diffusion. The Fisher-Rao geometry on $\MG$ could
+% provide a principled label-preserving forward schedule by constraining
+% the diffusion path to remain within a geodesic ball around the
+% original prediction. This is the strongest open question arising
+% from this work.
+
+% \paragraph{Correlated edge models.}
+% Relaxing the Bernoulli independence assumption to a structured
+% graphical model (e.g.\ a Markov random field over edges) would
+% require a non-diagonal FIM and a more general natural gradient
+% approximation (e.g.\ K-FAC style). This connects to the broader
+% question of which graph generative models are compatible with
+% tractable information geometry.
+
+% \paragraph{Diffusion maps on $\MG$.}
+% \citet{coifman2006diffusion} show that diffusion maps provide a
+% spectral characterization of a manifold via the eigenfunctions of
+% the graph Laplacian operator. Applying this to $\MG$ would yield
+% intrinsic coordinates for the explanation manifold, providing an
+% independent validation of the geodesic paths computed here.
+
+% \paragraph{Shapley axiom formalization.}
+% The completeness property $\sum_{(i,j)}\phil = f(e^*) - f(G)$
+% is in the spirit of Shapley efficiency but is not a formal
+% equivalence. A full axiomatic treatment --- showing which Shapley
+% axioms the geodesic attribution satisfies and which it does not ---
+% would sharpen the comparison to GraphSVX \citep{duval2021graphsvx}
+% and GNNShap.
+
+% \paragraph{Extension to node-level tasks.}
+% The current framework addresses graph-level classification.
+% Extending geodesic attribution to node-level tasks would require
+% adapting the manifold parameterization to account for the
+% neighborhood structure of the target node.
+
+% ================================================================
+% Bibliography
+% ================================================================
+\bibliographystyle{plainnat}
+\begin{thebibliography}{99}
+
+\bibitem[Amari(2016)]{amari2016}
+Amari, S. (2016).
+\textit{Information geometry and its applications}.
+Springer.
+
+\bibitem[Chen et al.(2023)]{chen2023d4explainer}
+Chen, J., Wu, S., Gupta, A., \& Ying, R. (2023).
+D4Explainer: In-distribution GNN explanations via discrete denoising
+diffusion.
+\textit{Advances in Neural Information Processing Systems (NeurIPS 2023)}.
+arXiv:2310.19321.
+
+\bibitem[Coifman \& Lafon(2006)]{coifman2006diffusion}
+Coifman, R.~R., \& Lafon, S. (2006).
+Diffusion maps.
+\textit{Applied and Computational Harmonic Analysis}, 21(1), 5--30.
+
+\bibitem[Doshi-Velez \& Kim(2017)]{doshi2017towards}
+Doshi-Velez, F., \& Kim, B. (2017).
+Towards a rigorous science of interpretable machine learning.
+arXiv:1702.08608.
+
+\bibitem[Duval \& Malliaros(2021)]{duval2021graphsvx}
+Duval, A., \& Malliaros, F. (2021).
+GraphSVX: Shapley value explanations for graph neural networks.
+\textit{European Conference on Machine Learning (ECML 2021)}.
+
+\bibitem[Jo et al.(2022)]{jo2022score}
+Jo, J., Lee, S., \& Hwang, S.~J. (2022).
+Score-based generative modeling of graphs via the system of stochastic
+differential equations.
+\textit{International Conference on Machine Learning (ICML 2022)},
+pp.~10362--10383.
+
+\bibitem[Ly et al.(2017)]{ly2017tutorial}
+Ly, A., Marsman, M., Verhagen, J., Grasman, R.~P., \& Wagenmakers,
+E.~J. (2017).
+A tutorial on Fisher information.
+\textit{Journal of Mathematical Psychology}, 80, 40--55.
+
+\bibitem[{\O}ksendal(2010)]{oksendal2010}
+{\O}ksendal, B. (2010).
+\textit{Stochastic differential equations: An introduction with
+applications} (6th ed.).
+Springer.
+
+\bibitem[Song et al.(2021)]{song2021score}
+Song, Y., Sohl-Dickstein, J., Kingma, D.~P., Kumar, A., Ermon, S.,
+\& Poole, B. (2021).
+Score-based generative modeling through stochastic differential
+equations.
+\textit{International Conference on Learning Representations (ICLR 2021)}.
+
+\end{thebibliography}
+
+\end{document}

@@ -297,6 +297,7 @@ class DiffExplainer(Explainer):
 
                 use_nat_grad = getattr(args, "natural_gradient", False)
                 nat_grad_eps = getattr(args, "nat_grad_eps", 1e-6)
+                nat_grad_cf_only = getattr(args, "nat_grad_cf_only", False)
 
                 if getattr(args, "memory_efficient", False):
                     # Per-sigma BCE backward + single-sigma CF approximation.
@@ -316,7 +317,7 @@ class DiffExplainer(Explainer):
                                 score_j = grad_checkpoint(run_model, train_x_b, noise_adj_j, mask, sigma, use_reentrant=False)
                             else:
                                 score_j = model(A=noise_adj_j, node_features=train_x_b, mask=mask, noiselevel=sigma)
-                            if use_nat_grad:
+                            if use_nat_grad and not nat_grad_cf_only:
                                 register_natural_gradient_hook(score_j, epsilon=nat_grad_eps)
                             bce_j = loss_func_bce(
                                 score_j.squeeze(-1),
@@ -377,10 +378,19 @@ class DiffExplainer(Explainer):
                             mask=mask.to(args.device),
                             noiselevel=sigma,
                         )
-                        if use_nat_grad:
+                        if use_nat_grad and not nat_grad_cf_only:
                             register_natural_gradient_hook(score_batch, epsilon=nat_grad_eps)
                         score.append(score_batch)
                         masks.append(mask)
+                    if use_nat_grad and nat_grad_cf_only:
+                        # Clone path so the FR hook only modifies CF gradient; BCE flows through `score` un-rescaled.
+                        score_for_cf = []
+                        for s in score:
+                            s_cf = s.clone()
+                            register_natural_gradient_hook(s_cf, epsilon=nat_grad_eps)
+                            score_for_cf.append(s_cf)
+                    else:
+                        score_for_cf = score
                     graph_batch_sub = tensor2graph(graph, score, mask)
                     y_pred, y_exp = gnn_pred(graph, graph_batch_sub, gnn_model, ds=args.dataset, task=args.task)
                     full_edge_index = gen_full(graph.batch, mask)
@@ -389,7 +399,7 @@ class DiffExplainer(Explainer):
                     modif_r = sparsity(score, train_adj_b, mask)
                     remain_r = sparsity(score, train_adj_b, train_adj_b)
                     loss_cf, fid_drop, acc_cf = loss_cf_exp(
-                        gnn_model, graph, score, y_pred, y_exp, full_edge_index, mask, ds=args.dataset, task=args.task
+                        gnn_model, graph, score_for_cf, y_pred, y_exp, full_edge_index, mask, ds=args.dataset, task=args.task
                     )
                     loss_dist = loss_func_bce(
                         score_b,
