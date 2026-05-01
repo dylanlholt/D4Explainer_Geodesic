@@ -297,6 +297,7 @@ class DiffExplainer(Explainer):
 
                 use_nat_grad = getattr(args, "natural_gradient", False)
                 nat_grad_eps = getattr(args, "nat_grad_eps", 1e-6)
+                nat_grad_cap = getattr(args, "nat_grad_cap", 100.0)
                 nat_grad_cf_only = getattr(args, "nat_grad_cf_only", False)
 
                 if getattr(args, "memory_efficient", False):
@@ -318,7 +319,7 @@ class DiffExplainer(Explainer):
                             else:
                                 score_j = model(A=noise_adj_j, node_features=train_x_b, mask=mask, noiselevel=sigma)
                             if use_nat_grad and not nat_grad_cf_only:
-                                register_natural_gradient_hook(score_j, epsilon=nat_grad_eps)
+                                register_natural_gradient_hook(score_j, epsilon=nat_grad_eps, cap=nat_grad_cap)
                             bce_j = loss_func_bce(
                                 score_j.squeeze(-1),
                                 train_adj_b,
@@ -339,7 +340,7 @@ class DiffExplainer(Explainer):
                         else:
                             score_cf = model(A=noise_adj_cf, node_features=train_x_b, mask=mask, noiselevel=sigma_cf)
                         if use_nat_grad:
-                            register_natural_gradient_hook(score_cf, epsilon=nat_grad_eps)
+                            register_natural_gradient_hook(score_cf, epsilon=nat_grad_eps, cap=nat_grad_cap)
                         graph_batch_sub = tensor2graph(graph, [score_cf], mask)
                         y_pred, y_exp = gnn_pred(graph, graph_batch_sub, gnn_model, ds=args.dataset, task=args.task)
                         full_edge_index = gen_full(graph.batch, mask)
@@ -379,7 +380,7 @@ class DiffExplainer(Explainer):
                             noiselevel=sigma,
                         )
                         if use_nat_grad and not nat_grad_cf_only:
-                            register_natural_gradient_hook(score_batch, epsilon=nat_grad_eps)
+                            register_natural_gradient_hook(score_batch, epsilon=nat_grad_eps, cap=nat_grad_cap)
                         score.append(score_batch)
                         masks.append(mask)
                     if use_nat_grad and nat_grad_cf_only:
@@ -387,7 +388,7 @@ class DiffExplainer(Explainer):
                         score_for_cf = []
                         for s in score:
                             s_cf = s.clone()
-                            register_natural_gradient_hook(s_cf, epsilon=nat_grad_eps)
+                            register_natural_gradient_hook(s_cf, epsilon=nat_grad_eps, cap=nat_grad_cap)
                             score_for_cf.append(s_cf)
                     else:
                         score_for_cf = score

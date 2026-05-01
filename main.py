@@ -53,6 +53,7 @@ def parse_args():
     parser.add_argument("--max_graph_size", type=int, default=None, help="Drop graphs with num_nodes > max_graph_size from ALL splits (train/val/test) before training. Hardware-driven data cap applied uniformly so train and eval distributions match. Documented as a data deviation; loss/optimizer unchanged.")
     parser.add_argument("--natural_gradient", action="store_true", default=False, help="[Extension] Apply diagonal Fisher-Rao natural-gradient rescaling to score tensors. Off = paper baseline.")
     parser.add_argument("--nat_grad_eps", type=float, default=1e-6, help="[Extension] Boundary clamp for θ in natural-gradient hook to prevent vanishing/exploding gradient at θ∈{0,1}.")
+    parser.add_argument("--nat_grad_cap", type=float, default=100.0, help="[Extension] Upper bound on the 1/(θ(1-θ)) rescaling factor. Caps gradient amplification at extreme logits to bound update size.")
     parser.add_argument("--nat_grad_cf_only", action="store_true", default=False, help="[Extension] Restrict natural-gradient hook to the CF loss pathway only; leave BCE/denoising gradient unmodified. Per CONTEXT.md §2.1 the Fisher-Rao framing is about the explanation manifold (CF domain), not the reconstruction objective. No effect unless --natural_gradient is also set.")
     parser.add_argument("--run_name", type=str, default=None, help="Optional subfolder under results/{dataset}/ for this run's artifacts (best_model.pth, config.json, metrics.jsonl). Use to keep baseline and extension runs separate.")
 
