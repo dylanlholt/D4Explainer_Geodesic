@@ -4,7 +4,10 @@ import time
 
 import numpy as np
 import torch
-from torch.amp import GradScaler, autocast
+try:
+    from torch.amp import GradScaler, autocast
+except ImportError:
+    from torch.cuda.amp import GradScaler, autocast
 from torch.utils.checkpoint import checkpoint as grad_checkpoint
 from torch_geometric.loader import DataLoader
 from torch_geometric.utils import to_undirected
@@ -568,7 +571,7 @@ class DiffExplainer(Explainer):
         """
         model = Powerful(args).to(args.device)
         exp_dir = get_exp_dir(args)
-        model.load_state_dict(torch.load(os.path.join(exp_dir, "best_model.pth"), weights_only=False)["model"])
+        model.load_state_dict(torch.load(os.path.join(exp_dir, "best_model.pth"), map_location=args.device, weights_only=False)["model"])
         model.eval()
         graph.to(args.device)
         test_adj_b, test_x_b = graph2tensor(graph, device=args.device)  # [bsz, N, N]
@@ -633,7 +636,7 @@ class DiffExplainer(Explainer):
         mask = torch.ones_like(random_adj).to(args.device)
         model = Powerful(args).to(args.device)
         exp_dir = get_exp_dir(args)
-        model.load_state_dict(torch.load(os.path.join(exp_dir, "best_model.pth"), weights_only=False)["model"])
+        model.load_state_dict(torch.load(os.path.join(exp_dir, "best_model.pth"), map_location=args.device, weights_only=False)["model"])
         model.eval()
         score = model(A=random_adj, node_features=node_feature, mask=mask, noiselevel=sigma).to(args.device)
         score = score.squeeze(0).squeeze(-1)
